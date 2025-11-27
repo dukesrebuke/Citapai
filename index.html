@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="app-title-tag">Citapai - Medellín Dates</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -74,33 +73,36 @@
             /* Apple Maps uses a gray/dark theme */
             @apply bg-gray-800 text-white shadow-md shadow-gray-500/50 hover:bg-gray-700;
         }
+        
+        /* Style for the new shuffle button */
+        #shuffle-button {
+            @apply w-full bg-secondary text-text-dark py-3 rounded-xl font-bold text-lg hover:bg-teal-200 transition duration-200 shadow-md shadow-teal-300/50 flex items-center justify-center space-x-2 mt-4;
+        }
     </style>
 </head>
 <body class="bg-background min-h-screen p-4 flex flex-col items-center font-sans">
 
-    <!-- Main Container -->
-    <div class="w-full max-w-lg">
+    <!-- Main Container --><div class="w-full max-w-lg">
         <header class="text-center mb-8">
             <h1 class="text-3xl font-extrabold text-text-dark" id="app-title">Citapai</h1>
             <p class="text-text-light mt-1" id="app-subtitle">Find the perfect date spot in Medellín.</p>
         </header>
 
-        <!-- Language Toggle Switch -->
-        <div class="flex justify-center mb-6">
+        <!-- Language Toggle Switch --><div class="flex justify-center mb-6">
             <div class="inline-flex rounded-xl bg-gray-200 p-1 space-x-1">
                 <button id="lang-en" class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg active transition duration-150" data-lang="en">English</button>
                 <button id="lang-es" class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg transition duration-150" data-lang="es">Español</button>
             </div>
         </div>
 
-        <!-- Input Panel (The Vibe Filter) -->
-        <div class="bg-card p-6 rounded-xl card-glow mb-8">
-            <h2 class="text-xl font-semibold mb-4 text-text-dark" id="vibe-title">Set the Vibe</h2>
+        <!-- Input Panel (The Vibe Filter) --><div class="bg-card p-6 rounded-xl card-glow mb-8">
+            <!-- Centered Header -->
+            <h2 class="text-xl font-semibold mb-4 text-text-dark text-center" id="vibe-title">Set the Vibe</h2>
             
             <form id="date-vibe-form" class="space-y-4">
-                <!-- Vibe Selector -->
-                <div>
-                    <label class="block text-sm font-medium text-text-light mb-2" id="label-atmosphere">Atmosphere</label>
+                <!-- Vibe Selector --><div>
+                    <!-- Centered Label -->
+                    <label class="block text-sm font-medium text-text-light mb-2 text-center" id="label-atmosphere">Atmosphere</label>
                     <div class="flex space-x-2 md:space-x-3">
                         <input type="radio" id="vibe-chill" name="vibe" value="Chill and Cozy" class="input-radio hidden" checked>
                         <label for="vibe-chill" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="vibe-chill">Chill & Cozy</label>
@@ -113,9 +115,9 @@
                     </div>
                 </div>
 
-                <!-- Budget Selector -->
-                <div>
-                    <label class="block text-sm font-medium text-text-light mb-2" id="label-budget">Budget</label>
+                <!-- Budget Selector --><div>
+                    <!-- Centered Label -->
+                    <label class="block text-sm font-medium text-text-light mb-2 text-center" id="label-budget">Budget</label>
                     <div class="flex space-x-2 md:space-x-3">
                         <input type="radio" id="budget-friendly" name="budget" value="Budget-Friendly" class="input-radio hidden" checked>
                         <label for="budget-friendly" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="budget-friendly">💸 Budget</label>
@@ -128,9 +130,9 @@
                     </div>
                 </div>
 
-                <!-- Time of Day Selector -->
-                <div>
-                    <label class="block text-sm font-medium text-text-light mb-2" id="label-time">When are you going?</label>
+                <!-- Time of Day Selector --><div>
+                    <!-- Centered Label -->
+                    <label class="block text-sm font-medium text-text-light mb-2 text-center" id="label-time">When are you going?</label>
                     <div class="flex space-x-2 md:space-x-3">
                         <input type="radio" id="time-day" name="time" value="Daytime (12 PM to 5 PM)" class="input-radio hidden" checked>
                         <label for="time-day" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="time-day">☀️ Daytime</label>
@@ -147,9 +149,9 @@
             </form>
         </div>
 
-        <!-- Output Card (Results) -->
-        <div id="results-container" class="hidden bg-card p-6 rounded-xl card-glow">
-            <h2 class="text-2xl font-bold text-primary mb-4" id="idea-title"></h2>
+        <!-- Output Card (Results) --><div id="results-container" class="hidden bg-card p-6 rounded-xl card-glow">
+            <!-- Centered Title -->
+            <h2 class="text-2xl font-bold text-primary mb-4 text-center" id="idea-title"></h2>
             
             <div id="loading-spinner" class="hidden text-center py-10">
                 <div class="flex justify-center items-center space-x-2">
@@ -159,28 +161,25 @@
             </div>
 
             <div id="idea-content" class="text-text-light space-y-4">
-                <!-- Location/Address -->
-                <p class="text-sm font-medium text-text-light">
-                    <span class="inline-block w-20 font-bold text-text-dark" data-lang-key="result-location-label" id="result-location-label-static">Location:</span> 
+                
+                <!-- Location/Address (CENTERED) --><p class="text-sm font-medium text-text-light text-center">
+                    <span class="font-bold text-text-dark" data-lang-key="result-location-label" id="result-location-label-static">Location:</span> 
                     <span id="location-text"></span>
                 </p>
 
-                <!-- Map Links Section -->
-                <div id="map-links-container" class="border-t border-gray-100 pt-4">
+                <!-- Map Links Section (CENTERED) --><div id="map-links-container" class="border-t border-gray-100 pt-4 text-center">
                     <h3 class="text-lg font-semibold text-text-dark mb-2" id="result-directions-title" data-lang-key="result-directions-title">Get Directions</h3>
-                    <div id="map-links" class="grid grid-cols-2 gap-3">
-                        <!-- Map buttons will be inserted here by JavaScript -->
-                    </div>
+                    <div id="map-links" class="grid grid-cols-2 gap-3 max-w-xs mx-auto">
+                        <!-- Map buttons will be inserted here by JavaScript --></div>
                 </div>
 
-                <!-- Description/Vibe -->
-                <div class="border-t border-gray-100 pt-4">
-                    <h3 class="text-lg font-semibold text-text-dark mb-2" id="result-vibe-title" data-lang-key="result-vibe-title">The Vibe Check</h3>
+                <!-- Description/Vibe --><div class="border-t border-gray-100 pt-4">
+                    <!-- Centered Vibe Check Title -->
+                    <h3 class="text-lg font-semibold text-text-dark mb-2 text-center" id="result-vibe-title" data-lang-key="result-vibe-title">The Vibe Check</h3>
                     <p id="description-text"></p>
                 </div>
                 
-                <!-- Timing Details -->
-                <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                <!-- Timing Details --><div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
                     <div>
                         <p class="text-sm font-medium text-text-light" data-lang-key="result-hours-label" id="result-hours-label-static">Hours:</p>
                         <p class="text-text-dark font-semibold" id="hours-text"></p>
@@ -189,22 +188,25 @@
                         <p class="text-sm font-medium text-text-light" data-lang-key="result-best-time-label" id="result-best-time-label-static">Best Time to Go:</p>
                         <p class="text-text-dark font-semibold" id="best-time-text"></p>
                     </div>
-                    <div class="col-span-2">
+                    <div class="col-span-2 text-center"> <!-- This ensures the occupancy estimate label is centered -->
                         <p class="text-sm font-medium text-text-light" data-lang-key="result-occupancy-label" id="result-occupancy-label-static">Current Crowd (Estimate):</p>
                         <p class="text-text-dark font-semibold" id="occupancy-text"></p>
                     </div>
                 </div>
 
-                <!-- Citation -->
-                <div id="citation-box" class="mt-6 p-3 bg-secondary/20 rounded-lg text-xs text-text-dark hidden">
+                <!-- Citation --><div id="citation-box" class="mt-6 p-3 bg-secondary/20 rounded-lg text-xs text-text-dark hidden">
                     <p class="font-semibold mb-1" data-lang-key="result-source-label" id="result-source-label-static">Source:</p>
                     <a id="citation-link" href="#" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline truncate block"></a>
                 </div>
             </div>
         </div>
         
-        <!-- Footer / API Info -->
-        <footer class="mt-8 text-center text-xs text-gray-500">
+        <!-- NEW SHUFFLE BUTTON --><button id="shuffle-button" class="hidden">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0h5m1.25 10.5h4.996m2.383-2.383h-3.375m0 0a8.001 8.001 0 01-15.356-2.091"></path></svg>
+            <span id="shuffle-button-text" data-lang-key="shuffle-button-text">Try Another Suggestion (Shuffle)</span>
+        </button>
+
+        <!-- Footer / API Info --><footer class="mt-8 text-center text-xs text-gray-500">
             <p id="footer-text" data-lang-key="footer-text">Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.</p>
         </footer>
     </div>
@@ -218,7 +220,7 @@
         
         // **IMPORTANT: 1. Ensure this key is correct and valid.**
         // **2. It must be a Browser API key with the Gemini API enabled.**
-        const API_KEY_PLACEHOLDER = "AIzaSyAqJxMU5XC6MeDrcUx4YDqXZZxtvwnkCTk"; // <-- Updated key on line 225
+        const API_KEY_PLACEHOLDER = "AIzaSyAqJxMU5XC6MeDrcUx4YDqXZZxtvwnkCTk"; // <-- Your key here
 
         
         // This logic handles key injection in the Canvas editor vs. manual key for external deployment
@@ -228,6 +230,7 @@
         
         // Construct the URL. Append the API key only if it's explicitly provided (for external deployment).
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent${API_KEY ? `?key=${API_KEY}` : ''}`;
+        
         // --- Global State and Constants ---
         let currentLang = 'en'; // Default language
 
@@ -235,6 +238,7 @@
         const resultsContainer = document.getElementById('results-container');
         const loadingSpinner = document.getElementById('loading-spinner');
         const generateButton = document.getElementById('generate-button');
+        const shuffleButton = document.getElementById('shuffle-button'); // NEW
         const buttonText = document.getElementById('button-text');
         const form = document.getElementById('date-vibe-form');
         const buttonIcon = document.getElementById('button-icon');
@@ -272,6 +276,7 @@
                 'time-night': '🌙 Nighttime',
                 'button-text-default': 'Get a Medellín Date Suggestion!',
                 'button-text-loading': 'Brainstorming...',
+                'shuffle-button-text': 'Try Another Suggestion (Shuffle)', // NEW
                 'loading-text': 'Finding the perfect spot in El Poblado...',
                 'result-location-label': 'Location:',
                 'result-directions-title': 'Get Directions', 
@@ -282,9 +287,9 @@
                 'result-best-time-label': 'Best Time to Go:',
                 'result-occupancy-label': 'Current Crowd (Estimate):',
                 'result-source-label': 'Source:',
-                // UPDATED ERROR MESSAGE CHECK
-                'error-key-title': 'API Key Missing!',
-                'error-key-desc': 'You are running this application externally, but the API Key has not been updated in the code. Please replace "YOUR_GEMINI_API_KEY_HERE" with your own Gemini API key for it to function.',
+                'error-api-title': 'API Request Failed', // Updated title
+                'error-generic-desc': 'If the problem persists, please check the console for details or try refining your input to ensure the request meets safety guidelines.', // New generic advice
+                'error-key-desc': 'The request failed. If you see status 400 or 403, your API key is likely invalid, has not been enabled for the Gemini API service, or is not a Browser Key. Please verify your key.',
                 'footer-text': 'Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.'
             },
             'es': {
@@ -304,6 +309,7 @@
                 'time-night': '🌙 Noche',
                 'button-text-default': '¡Obtén una Sugerencia de Cita en Medellín!',
                 'button-text-loading': 'Generando ideas...',
+                'shuffle-button-text': 'Probar Otra Sugerencia (Barajar)', // NEW
                 'loading-text': 'Buscando el lugar perfecto en El Poblado...',
                 'result-location-label': 'Ubicación:',
                 'result-directions-title': 'Obtener Direcciones', 
@@ -314,9 +320,9 @@
                 'result-best-time-label': 'Mejor Hora:',
                 'result-occupancy-label': 'Afluencia (Estimada):',
                 'result-source-label': 'Fuente:',
-                // UPDATED ERROR MESSAGE CHECK
-                'error-key-title': '¡Falta la Clave API!',
-                'error-key-desc': 'Está ejecutando esta aplicación externamente, pero la clave API no ha sido actualizada en el código. Reemplace "YOUR_GEMINI_API_KEY_HERE" con su propia clave API de Gemini para que funcione.',
+                'error-api-title': 'Solicitud API Fallida', // Updated title
+                'error-generic-desc': 'Si el problema persiste, verifique la consola para obtener detalles o intente refinar su entrada para asegurarse de que la solicitud cumpla con las pautas de seguridad.', // New generic advice
+                'error-key-desc': 'La solicitud falló. Si ve el estado 400 o 403, es probable que su clave API no sea válida, no esté habilitada para el servicio Gemini API o no sea una clave de navegador. Verifique su clave.',
                 'footer-text': 'Impulsado por Google Gemini API (gemini-2.5-flash-preview-09-2025) con Google Search Grounding.'
             }
         };
@@ -338,6 +344,7 @@
             document.getElementById('label-time').textContent = translations['label-time'];
             document.getElementById('button-text').textContent = translations['button-text-default'];
             document.getElementById('loading-text').textContent = translations['loading-text'];
+            document.getElementById('shuffle-button-text').textContent = translations['shuffle-button-text']; // NEW
             
             // Update result labels
             document.getElementById('result-location-label-static').textContent = translations['result-location-label'];
@@ -354,7 +361,7 @@
             document.querySelectorAll('[data-lang-key]').forEach(el => {
                 const key = el.getAttribute('data-lang-key');
                 // Only update labels that are not the main button/footer
-                if (key !== 'button-text-default' && key !== 'loading-text' && key !== 'footer-text') {
+                if (key !== 'button-text-default' && key !== 'loading-text' && key !== 'footer-text' && key !== 'shuffle-button-text') {
                     el.textContent = translations[key];
                 }
             });
@@ -375,7 +382,7 @@
             
             // NOTE: Instructing the model to provide a MapQuery field for direct navigation links
             return `You are a renowned, "EVERYTHING" expert on Medellín, Colombia. Your goal is to provide a single, detailed, and highly unique "deep cut" date suggestion. Prioritize locations, activities, or venues that are known to locals, off the beaten path, or offer a distinctly authentic and exceptional experience, rather than standard tourist spots or ordinary chain restaurants. The suggestion must still be viable and runnable based on user preferences.
-            Your response MUST strictly adhere to the following key-value format. Do not include any introductory or concluding text outside this format. All VALUES MUST be in ${langName}.
+            Your response MUST strictly adhere to the following key-value format. Do not include any introductory or concluding text outside this format. Do not use markdown (like **bold** or italics). All VALUES MUST be in ${langName}.
 
             Title: [Name of the Location/Activity]
             Location: [Neighborhood or specific address/landmark in Medellín]
@@ -440,13 +447,16 @@
          */
         function parseModelResponse(text) {
             const data = {};
+            // Filter out empty lines
             const lines = text.split('\n').filter(line => line.trim() !== '');
 
             lines.forEach(line => {
+                // Split only on the first colon to handle values that contain colons (like addresses)
                 const [key, ...valueParts] = line.split(':');
                 if (key && valueParts.length > 0) {
+                    const cleanKey = key.trim();
                     const value = valueParts.join(':').trim();
-                    data[key.trim()] = value;
+                    data[cleanKey] = value;
                 }
             });
             return data;
@@ -456,19 +466,21 @@
          * Handles the form submission and initiates the API call.
          */
         async function handleGenerate(event) {
-            event.preventDefault();
+            if (event) {
+                 event.preventDefault();
+            }
             
             const translations = TRANSLATIONS[currentLang];
             
-            // --- CRITICAL CHECK FOR EXTERNAL DEPLOYMENT ---
-            // The check is now for the *original* placeholder string, not the variable's current value.
+            // --- CRITICAL CHECK FOR EXTERNAL DEPLOYMENT (MISSING KEY) ---
             if (API_KEY_PLACEHOLDER === OLD_API_KEY_PLACEHOLDER_STRING) {
-                // If the key is the original placeholder string, display the instructional error
                 resultsContainer.classList.remove('hidden');
                 loadingSpinner.classList.add('hidden');
                 document.getElementById('idea-content').classList.remove('hidden');
-                ideaTitle.textContent = translations['error-key-title'];
-                descriptionText.innerHTML = translations['error-key-desc'];
+                ideaTitle.textContent = translations['error-api-title'];
+                descriptionText.innerHTML = currentLang === 'es' 
+                    ? '¡La clave API aún está con el valor predeterminado! Reemplace "YOUR_GEMINI_API_KEY_HERE" en el código con su clave.' 
+                    : 'The API Key is still the placeholder value! Please replace "YOUR_GEMINI_API_KEY_HERE" in the code with your key.';
                 locationText.textContent = hoursText.textContent = bestTimeText.textContent = occupancyText.textContent = '—';
                 mapLinksContainer.innerHTML = '';
                 citationBox.classList.add('hidden');
@@ -487,130 +499,155 @@
             resultsContainer.classList.remove('hidden');
             loadingSpinner.classList.remove('hidden');
             document.getElementById('idea-content').classList.add('hidden');
+            
+            // Disable all interactive elements
             generateButton.disabled = true;
+            shuffleButton.disabled = true;
+            shuffleButton.classList.add('hidden'); // Hide shuffle button during generation
+            
+            // Update button text and icon
             buttonText.textContent = translations['button-text-loading'];
             buttonIcon.classList.add('animate-spin');
-            mapLinksContainer.innerHTML = ''; // Clear previous map links
 
             // 3. Construct API Payload
+            const systemPrompt = getSystemPrompt();
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
-                tools: [{ "google_search": {} }], // Use search grounding for accuracy
-                systemInstruction: {
-                    parts: [{ text: getSystemPrompt() }]
-                },
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
             };
 
-            const options = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            };
+            let responseData;
+            let citationSources = [];
 
             try {
-                // 4. API Call with Backoff
-                const response = await fetchWithBackoff(API_URL, options);
-                
+                const response = await fetchWithBackoff(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
                 if (!response.ok) {
-                    const errorMessage = `API returned status ${response.status}: ${response.statusText}`;
-                    throw new Error(errorMessage);
+                    throw new Error(`API request failed with status ${response.status}`);
                 }
 
                 const result = await response.json();
                 const candidate = result.candidates?.[0];
-
-                if (!candidate || !candidate.content?.parts?.[0]?.text) {
-                     throw new Error("Received an empty or malformed response from the model.");
+                
+                // Check if the content was blocked by safety filters
+                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                    throw new Error(`Content Blocked: ${result.promptFeedback.blockReason}. Try different input terms.`);
                 }
 
-                // 5. Parse and Display Results
-                const rawText = candidate.content.parts[0].text;
-                const dateData = parseModelResponse(rawText);
-                
-                // Set the UI fields (values are now in the correct language from the model)
-                ideaTitle.textContent = dateData.Title || (currentLang === 'es' ? 'Sugerencia de Cita' : 'Date Suggestion');
-                locationText.textContent = dateData.Location || 'Medellín, Colombia';
-                descriptionText.textContent = dateData.Description || (currentLang === 'es' ? 'Este es un lugar fantástico para una cita.' : 'This is a fantastic place for a date.');
-                hoursText.textContent = dateData.Hours || '—';
-                bestTimeText.textContent = dateData.BestTime || '—';
-                occupancyText.textContent = dateData.Occupancy || '—';
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const modelText = candidate.content.parts[0].text;
+                    responseData = parseModelResponse(modelText);
 
-                // NEW: Generate Map Links using MapQuery
-                const mapQuery = dateData.MapQuery || dateData.Title || dateData.Location || 'Medellín, Colombia';
-                mapLinksContainer.innerHTML = createMapLinksHtml(mapQuery);
-
-
-                // Handle Citations (Grounding Sources)
-                citationBox.classList.add('hidden');
-                const groundingMetadata = candidate.groundingMetadata;
-                if (groundingMetadata && groundingMetadata.groundingAttributions && groundingMetadata.groundingAttributions.length > 0) {
-                    const source = groundingMetadata.groundingAttributions[0].web;
-                    if (source && source.uri && source.title) {
-                        citationLink.href = source.uri;
-                        citationLink.textContent = `${source.title} (${new URL(source.uri).hostname})`;
-                        citationBox.classList.remove('hidden');
+                    // Must have Title and MapQuery to be considered a successful, useful response
+                    if (!responseData.Title || !responseData.MapQuery) {
+                         throw new Error(`Incomplete response from AI. Missing Title or MapQuery fields.`);
                     }
-                }
-                
-                // Show content
-                document.getElementById('idea-content').classList.remove('hidden');
 
+                    // Extract grounding sources
+                    const groundingMetadata = candidate.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        citationSources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+                } else {
+                    // Catch-all for truly invalid/empty response structure
+                    throw new Error('Invalid or empty response content from API.');
+                }
 
             } catch (error) {
-                console.error("Error fetching date suggestion:", error);
+                console.error('Gemini API Error:', error);
                 
-                // Display error message to user (in current language)
-                ideaTitle.textContent = currentLang === 'es' ? "¡Ups! Error al encontrar la cita..." : "Oops! Error finding a date...";
+                const errorMessage = error.message || (currentLang === 'en' ? 'An unexpected API error occurred.' : 'Ocurrió un error inesperado en la API.');
                 
-                // Use the explicit error message from the API call
-                const userErrorMessage = error.message.includes('403') 
-                    ? (currentLang === 'es' ? "Error 403 (Prohibido/Acceso denegado). El problema es con la clave API. Vuelva a verificar la variable 'API_KEY_PLACEHOLDER'." : "Error 403 (Forbidden/Access denied). The problem is likely with the API key. Please re-check the 'API_KEY_PLACEHOLDER' variable.")
-                    : error.message;
+                // Handle user-facing error message
+                ideaTitle.textContent = translations['error-api-title'];
+                descriptionText.innerHTML = `${errorMessage} <br><br> <span class="text-sm">${translations['error-generic-desc']}</span>`;
 
-                descriptionText.textContent = currentLang === 'es' 
-                    ? `Lo sentimos, algo salió mal al comunicarnos con la API. Error: ${userErrorMessage}. ¡Por favor, inténtalo de nuevo en un momento!`
-                    : `Sorry, something went wrong while talking to the API. Error: ${userErrorMessage}. Please try again in a moment!`;
-                
                 locationText.textContent = hoursText.textContent = bestTimeText.textContent = occupancyText.textContent = '—';
-                mapLinksContainer.innerHTML = ''; // Clear map links on error
+                mapLinksContainer.innerHTML = '';
                 citationBox.classList.add('hidden');
                 document.getElementById('idea-content').classList.remove('hidden');
-
+                return; 
 
             } finally {
-                // 6. UI State: Ready
+                // 4. UI State: Done
                 loadingSpinner.classList.add('hidden');
+                
+                // Re-enable elements
                 generateButton.disabled = false;
+                shuffleButton.disabled = false;
+                shuffleButton.classList.remove('hidden'); // Show shuffle button
+                
+                // Reset button text and icon
                 buttonText.textContent = translations['button-text-default'];
                 buttonIcon.classList.remove('animate-spin');
             }
+
+            // 5. Populate Results (Only runs on successful try block)
+            ideaTitle.textContent = responseData.Title || 'N/A';
+            locationText.textContent = responseData.Location || 'N/A';
+            descriptionText.textContent = responseData.Description || 'N/A';
+            hoursText.textContent = responseData.Hours || 'N/A';
+            bestTimeText.textContent = responseData.BestTime || 'N/A';
+            occupancyText.textContent = responseData.Occupancy || 'N/A';
+            
+            // Add Map Links
+            if (responseData.MapQuery) {
+                mapLinksContainer.innerHTML = createMapLinksHtml(responseData.MapQuery);
+                document.getElementById('map-links-container').classList.remove('hidden');
+            } else {
+                mapLinksContainer.innerHTML = '';
+                document.getElementById('map-links-container').classList.add('hidden');
+            }
+
+            // Add Citation
+            if (citationSources.length > 0) {
+                const source = citationSources[0]; // Display the first source
+                citationLink.href = source.uri;
+                citationLink.textContent = source.title;
+                citationBox.classList.remove('hidden');
+            } else {
+                citationBox.classList.add('hidden');
+            }
+            
+            document.getElementById('idea-content').classList.remove('hidden');
+
         }
 
-        // --- Initialization and Event Listeners ---
-
-        // Attach event listener to the form
-        form.addEventListener('submit', handleGenerate);
-        
-        // Attach event listeners to language buttons
-        langSwitches.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const lang = e.currentTarget.getAttribute('data-lang');
-                if (lang) {
-                    switchLanguage(lang);
-                }
-            });
-        });
+        // --- Event Listeners and Initialization ---
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize with English (default) on load
+            // Initialize language to English
             switchLanguage(currentLang);
             
-            // Final check on API Key state when loading externally
-            if (API_KEY_PLACEHOLDER === OLD_API_KEY_PLACEHOLDER_STRING) {
-                console.warn("API Key is missing. Please replace 'YOUR_GEMINI_API_KEY_HERE' with your actual key for external deployment.");
-            }
-        });
+            // Language switch handler
+            langSwitches.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lang = btn.getAttribute('data-lang');
+                    if (lang !== currentLang) {
+                        switchLanguage(lang);
+                    }
+                });
+            });
 
+            // Form submission handler
+            form.addEventListener('submit', handleGenerate);
+            
+            // NEW: Shuffle button handler. This re-submits the form using the current selected values.
+            shuffleButton.addEventListener('click', () => {
+                // Call handleGenerate without an event object to skip event.preventDefault() and directly process the existing form values
+                handleGenerate(null); 
+            });
+        });
     </script>
 </body>
 </html>
