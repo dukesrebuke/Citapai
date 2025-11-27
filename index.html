@@ -214,7 +214,12 @@
         // INSTRUCTIONS: If running on an external website (like Netlify), 
         // you MUST replace the placeholder below with your own Gemini API key.
         const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
-        const API_KEY_PLACEHOLDER = "AIzaSyB-8WFpqKUcTGpMutbFZnGIT90mYS1oEyM";
+        const OLD_API_KEY_PLACEHOLDER_STRING = "YOUR_GEMINI_API_KEY_HERE";
+        
+        // **IMPORTANT: Replace this string with your actual key if deploying externally.**
+        // This variable currently holds your actual key (from your screenshot).
+        const API_KEY_PLACEHOLDER = "AIzaSyB-8WFpqKUcTGpMutBfZnGIT90MYS1oEYM"; // <-- This is where your key lives
+
         
         // This logic handles key injection in the Canvas editor vs. manual key for external deployment
         const API_KEY = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token.length > 0) 
@@ -277,8 +282,9 @@
                 'result-best-time-label': 'Best Time to Go:',
                 'result-occupancy-label': 'Current Crowd (Estimate):',
                 'result-source-label': 'Source:',
+                // UPDATED ERROR MESSAGE CHECK
                 'error-key-title': 'API Key Missing!',
-                'error-key-desc': 'You are running this application externally. Please replace "YOUR_GEMINI_API_KEY_HERE" in the code with your own Gemini API key for it to function.',
+                'error-key-desc': 'You are running this application externally, but the API Key has not been updated in the code. Please replace "YOUR_GEMINI_API_KEY_HERE" with your own Gemini API key for it to function.',
                 'footer-text': 'Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.'
             },
             'es': {
@@ -308,8 +314,9 @@
                 'result-best-time-label': 'Mejor Hora:',
                 'result-occupancy-label': 'Afluencia (Estimada):',
                 'result-source-label': 'Fuente:',
+                // UPDATED ERROR MESSAGE CHECK
                 'error-key-title': '¡Falta la Clave API!',
-                'error-key-desc': 'Está ejecutando esta aplicación externamente. Reemplace "YOUR_GEMINI_API_KEY_HERE" en el código con su propia clave API de Gemini para que funcione.',
+                'error-key-desc': 'Está ejecutando esta aplicación externamente, pero la clave API no ha sido actualizada en el código. Reemplace "YOUR_GEMINI_API_KEY_HERE" con su propia clave API de Gemini para que funcione.',
                 'footer-text': 'Impulsado por Google Gemini API (gemini-2.5-flash-preview-09-2025) con Google Search Grounding.'
             }
         };
@@ -454,8 +461,9 @@
             const translations = TRANSLATIONS[currentLang];
             
             // --- CRITICAL CHECK FOR EXTERNAL DEPLOYMENT ---
-            if (API_KEY === API_KEY_PLACEHOLDER) {
-                // If the key is the placeholder, display the instructional error instead of calling the API
+            // The check is now for the *original* placeholder string, not the variable's current value.
+            if (API_KEY_PLACEHOLDER === OLD_API_KEY_PLACEHOLDER_STRING) {
+                // If the key is the original placeholder string, display the instructional error
                 resultsContainer.classList.remove('hidden');
                 loadingSpinner.classList.add('hidden');
                 document.getElementById('idea-content').classList.remove('hidden');
@@ -598,7 +606,7 @@
             switchLanguage(currentLang);
             
             // Final check on API Key state when loading externally
-            if (API_KEY === API_KEY_PLACEHOLDER) {
+            if (API_KEY_PLACEHOLDER === OLD_API_KEY_PLACEHOLDER_STRING) {
                 console.warn("API Key is missing. Please replace 'YOUR_GEMINI_API_KEY_HERE' with your actual key for external deployment.");
             }
         });
