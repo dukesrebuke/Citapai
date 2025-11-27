@@ -216,9 +216,9 @@
         const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
         const OLD_API_KEY_PLACEHOLDER_STRING = "YOUR_GEMINI_API_KEY_HERE";
         
-        // **IMPORTANT: Replace this string with your actual key if deploying externally.**
-        // This variable currently holds your actual key (from your screenshot).
-        const API_KEY_PLACEHOLDER = "AIzaSyB-8WFpqKUcTGpMutBfZnGIT90MYS1oEYM"; // <-- This is where your key lives
+        // **IMPORTANT: 1. Ensure this key is correct and valid.**
+        // **2. It must be a Browser API key with the Gemini API enabled.**
+        const API_KEY_PLACEHOLDER = "AIzaSyAqJxMU5XC6MeDrcUx4YDqXZZxtvwnkCTk"; // <-- Updated key on line 225
 
         
         // This logic handles key injection in the Canvas editor vs. manual key for external deployment
@@ -226,8 +226,8 @@
             ? "" // Use empty string if in Canvas environment, letting it inject the key via fetch.
             : API_KEY_PLACEHOLDER; 
         
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${API_KEY}`;
-        
+        // Construct the URL. Append the API key only if it's explicitly provided (for external deployment).
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent${API_KEY ? `?key=${API_KEY}` : ''}`;
         // --- Global State and Constants ---
         let currentLang = 'en'; // Default language
 
