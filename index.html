@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="app-title-tag">Citapai - Medellín Dates</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#009688', // Teal/Paisa-friendly color
+                        'secondary': '#80CBC4',
+                        'background': '#F4F4F9',
+                        'card': '#FFFFFF',
+                        'text-dark': '#212121',
+                        'text-light': '#424242',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        /* Custom styles for subtle aesthetic touches */
+        .card-glow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06), 0 0 10px rgba(0, 150, 136, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-radio:checked + label {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            font-weight: 600;
+            border-color: var(--primary);
+        }
+
+        .input-radio:checked + label:hover {
+            background-color: #00796B;
+        }
+
+        .skeleton-loader {
+            background: linear-gradient(-90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
+            background-size: 400% 400%;
+            animation: pulse-bg 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-bg {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Set CSS variables for Tailwind access */
+        :root {
+            --primary: #009688;
+        }
+        
+        /* Language Toggle Active State */
+        .lang-switch.active {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            box-shadow: 0 2px 5px rgba(0, 150, 136, 0.4);
+        }
+        .lang-switch:not(.active) {
+            background-color: transparent;
+            color: var(--text-dark);
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen p-4 flex flex-col items-center font-sans">
+
+    <!-- Main Container -->
+    <div class="w-full max-w-lg">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-text-dark" id="app-title">Citapai</h1>
+            <p class="text-text-light mt-1" id="app-subtitle">Find the perfect date spot in Medellín.</p>
+        </header>
+
+        <!-- Language Toggle Switch -->
+        <div class="flex justify-center mb-6">
+            <div class="inline-flex rounded-xl bg-gray-200 p-1 space-x-1">
+                <button id="lang-en" class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg active transition duration-150" data-lang="en">English</button>
+                <button id="lang-es" class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg transition duration-150" data-lang="es">Español</button>
+            </div>
+        </div>
+
+        <!-- Input Panel (The Vibe Filter) -->
+        <div class="bg-card p-6 rounded-xl card-glow mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-text-dark" id="vibe-title">Set the Vibe</h2>
+            
+            <form id="date-vibe-form" class="space-y-4">
+                <!-- Vibe Selector -->
+                <div>
+                    <label class="block text-sm font-medium text-text-light mb-2" id="label-atmosphere">Atmosphere</label>
+                    <div class="flex space-x-2 md:space-x-3">
+                        <input type="radio" id="vibe-chill" name="vibe" value="Chill and Cozy" class="input-radio hidden" checked>
+                        <label for="vibe-chill" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="vibe-chill">Chill & Cozy</label>
+                        
+                        <input type="radio" id="vibe-lively" name="vibe" value="Lively and Social" class="input-radio hidden">
+                        <label for="vibe-lively" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="vibe-lively">Lively & Social</label>
+
+                        <input type="radio" id="vibe-cultural" name="vibe" value="Cultural and Intellectual" class="input-radio hidden">
+                        <label for="vibe-cultural" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="vibe-cultural">Cultural & Intellectual</label>
+                    </div>
+                </div>
+
+                <!-- Budget Selector -->
+                <div>
+                    <label class="block text-sm font-medium text-text-light mb-2" id="label-budget">Budget</label>
+                    <div class="flex space-x-2 md:space-x-3">
+                        <input type="radio" id="budget-friendly" name="budget" value="Budget-Friendly" class="input-radio hidden" checked>
+                        <label for="budget-friendly" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="budget-friendly">💸 Budget</label>
+                        
+                        <input type="radio" id="budget-mid" name="budget" value="Mid-Range" class="input-radio hidden">
+                        <label for="budget-mid" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="budget-mid">💰 Mid-Range</label>
+
+                        <input type="radio" id="budget-splurge" name="budget" value="Splurge" class="input-radio hidden">
+                        <label for="budget-splurge" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="budget-splurge">💎 Splurge</label>
+                    </div>
+                </div>
+
+                <!-- Time of Day Selector -->
+                <div>
+                    <label class="block text-sm font-medium text-text-light mb-2" id="label-time">When are you going?</label>
+                    <div class="flex space-x-2 md:space-x-3">
+                        <input type="radio" id="time-day" name="time" value="Daytime (12 PM to 5 PM)" class="input-radio hidden" checked>
+                        <label for="time-day" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="time-day">☀️ Daytime</label>
+                        
+                        <input type="radio" id="time-night" name="time" value="Nighttime (6 PM to 10 PM)" class="input-radio hidden">
+                        <label for="time-night" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="time-night">🌙 Nighttime</label>
+                    </div>
+                </div>
+
+                <button type="submit" id="generate-button" class="w-full bg-primary text-white py-3 rounded-xl font-bold text-lg hover:bg-teal-700 transition duration-200 shadow-lg shadow-teal-500/50 flex items-center justify-center space-x-2">
+                    <svg id="button-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15.75L4.75 9.5m0 0l-1.5-1.5m1.5 1.5l1.5 1.5m8.5 0l1.5 1.5M16 4.75L9.75 11m0 0l-1.5 1.5m1.5-1.5l1.5-1.5"></path></svg>
+                    <span id="button-text" data-lang-key="button-text-default">Get a Medellín Date Suggestion!</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Output Card (Results) -->
+        <div id="results-container" class="hidden bg-card p-6 rounded-xl card-glow">
+            <h2 class="text-2xl font-bold text-primary mb-4" id="idea-title"></h2>
+            
+            <div id="loading-spinner" class="hidden text-center py-10">
+                <div class="flex justify-center items-center space-x-2">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span class="text-text-light" id="loading-text" data-lang-key="loading-text">Finding the perfect spot in El Poblado...</span>
+                </div>
+            </div>
+
+            <div id="idea-content" class="text-text-light space-y-4">
+                <p class="text-sm font-medium text-text-light">
+                    <span class="inline-block w-20 font-bold text-text-dark" data-lang-key="result-location-label" id="result-location-label-static">Location:</span> 
+                    <span id="location-text"></span>
+                </p>
+                <div class="border-t border-gray-100 pt-4">
+                    <h3 class="text-lg font-semibold text-text-dark mb-2" id="result-vibe-title">The Vibe Check</h3>
+                    <p id="description-text"></p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                    <div>
+                        <p class="text-sm font-medium text-text-light" data-lang-key="result-hours-label" id="result-hours-label-static">Hours:</p>
+                        <p class="text-text-dark font-semibold" id="hours-text"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-text-light" data-lang-key="result-best-time-label" id="result-best-time-label-static">Best Time to Go:</p>
+                        <p class="text-text-dark font-semibold" id="best-time-text"></p>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-sm font-medium text-text-light" data-lang-key="result-occupancy-label" id="result-occupancy-label-static">Current Crowd (Estimate):</p>
+                        <p class="text-text-dark font-semibold" id="occupancy-text"></p>
+                    </div>
+                </div>
+
+                <div id="citation-box" class="mt-6 p-3 bg-secondary/20 rounded-lg text-xs text-text-dark hidden">
+                    <p class="font-semibold mb-1" data-lang-key="result-source-label" id="result-source-label-static">Source:</p>
+                    <a id="citation-link" href="#" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline truncate block"></a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer / API Info -->
+        <footer class="mt-8 text-center text-xs text-gray-500">
+            <p id="footer-text" data-lang-key="footer-text">Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Global State and Constants ---
+        let currentLang = 'en'; // Default language
+        
+        const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
+        const API_KEY = ""; // Canvas will provide this if it's empty
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${API_KEY}`;
+        
+        // --- UI Element References ---
+        const resultsContainer = document.getElementById('results-container');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const generateButton = document.getElementById('generate-button');
+        const buttonText = document.getElementById('button-text');
+        const form = document.getElementById('date-vibe-form');
+        const buttonIcon = document.getElementById('button-icon');
+        
+        // Output elements
+        const ideaTitle = document.getElementById('idea-title');
+        const locationText = document.getElementById('location-text');
+        const descriptionText = document.getElementById('description-text');
+        const hoursText = document.getElementById('hours-text');
+        const bestTimeText = document.getElementById('best-time-text');
+        const occupancyText = document.getElementById('occupancy-text');
+        const citationBox = document.getElementById('citation-box');
+        const citationLink = document.getElementById('citation-link');
+        
+        // Language elements
+        const langSwitches = document.querySelectorAll('.lang-switch');
+
+        // --- Translation Data ---
+        const TRANSLATIONS = {
+            'en': {
+                'app-title': 'Citapai',
+                'app-subtitle': 'Find the perfect date spot in Medellín.',
+                'vibe-title': 'Set the Vibe',
+                'label-atmosphere': 'Atmosphere',
+                'vibe-chill': 'Chill & Cozy',
+                'vibe-lively': 'Lively & Social',
+                'vibe-cultural': 'Cultural & Intellectual',
+                'label-budget': 'Budget',
+                'budget-friendly': '💸 Budget',
+                'budget-mid': '💰 Mid-Range',
+                'budget-splurge': '💎 Splurge',
+                'label-time': 'When are you going?',
+                'time-day': '☀️ Daytime',
+                'time-night': '🌙 Nighttime',
+                'button-text-default': 'Get a Medellín Date Suggestion!',
+                'button-text-loading': 'Brainstorming...',
+                'loading-text': 'Finding the perfect spot in El Poblado...',
+                'result-location-label': 'Location:',
+                'result-vibe-title': 'The Vibe Check',
+                'result-hours-label': 'Hours:',
+                'result-best-time-label': 'Best Time to Go:',
+                'result-occupancy-label': 'Current Crowd (Estimate):',
+                'result-source-label': 'Source:',
+                'footer-text': 'Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.'
+            },
+            'es': {
+                'app-title': 'Citapai',
+                'app-subtitle': 'Encuentra el lugar perfecto para tu cita en Medellín.',
+                'vibe-title': 'Elige el Ambiente',
+                'label-atmosphere': 'Atmósfera',
+                'vibe-chill': 'Relajado y Acogedor',
+                'vibe-lively': 'Animado y Social',
+                'vibe-cultural': 'Cultural e Intelectual',
+                'label-budget': 'Presupuesto',
+                'budget-friendly': '💸 Económico',
+                'budget-mid': '💰 Rango Medio',
+                'budget-splurge': '💎 Derroche',
+                'label-time': '¿Cuándo vas a ir?',
+                'time-day': '☀️ Día',
+                'time-night': '🌙 Noche',
+                'button-text-default': '¡Obtén una Sugerencia de Cita en Medellín!',
+                'button-text-loading': 'Generando ideas...',
+                'loading-text': 'Buscando el lugar perfecto en El Poblado...',
+                'result-location-label': 'Ubicación:',
+                'result-vibe-title': 'El Ambiente',
+                'result-hours-label': 'Horario:',
+                'result-best-time-label': 'Mejor Hora:',
+                'result-occupancy-label': 'Afluencia (Estimada):',
+                'result-source-label': 'Fuente:',
+                'footer-text': 'Impulsado por Google Gemini API (gemini-2.5-flash-preview-09-2025) con Google Search Grounding.'
+            }
+        };
+
+        /**
+         * Updates all static text elements on the page to the selected language.
+         * @param {string} lang - 'en' or 'es'
+         */
+        function switchLanguage(lang) {
+            currentLang = lang;
+            const translations = TRANSLATIONS[lang];
+
+            // Update simple IDs
+            document.getElementById('app-title-tag').textContent = translations['app-title'] + (lang === 'en' ? ' - Medellín Dates' : '');
+            document.getElementById('app-title').textContent = translations['app-title'];
+            document.getElementById('app-subtitle').textContent = translations['app-subtitle'];
+            document.getElementById('vibe-title').textContent = translations['vibe-title'];
+            document.getElementById('label-atmosphere').textContent = translations['label-atmosphere'];
+            document.getElementById('label-budget').textContent = translations['label-budget'];
+            document.getElementById('label-time').textContent = translations['label-time'];
+            document.getElementById('button-text').textContent = translations['button-text-default'];
+            document.getElementById('loading-text').textContent = translations['loading-text'];
+            
+            // Update result labels
+            document.getElementById('result-location-label-static').textContent = translations['result-location-label'];
+            document.getElementById('result-vibe-title').textContent = translations['result-vibe-title'];
+            document.getElementById('result-hours-label-static').textContent = translations['result-hours-label'];
+            document.getElementById('result-best-time-label-static').textContent = translations['result-best-time-label'];
+            document.getElementById('result-occupancy-label-static').textContent = translations['result-occupancy-label'];
+            document.getElementById('result-source-label-static').textContent = translations['result-source-label'];
+            document.getElementById('footer-text').textContent = translations['footer-text'];
+
+
+            // Update data-lang-key elements (for radio button labels)
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.getAttribute('data-lang-key');
+                // Only update labels that are not the main button
+                if (key !== 'button-text-default' && key !== 'loading-text' && key !== 'footer-text') {
+                    el.textContent = translations[key];
+                }
+            });
+
+            // Update button active state
+            langSwitches.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`lang-${lang}`).classList.add('active');
+        }
+
+        /**
+         * System instruction generator to guide the model's tone and output format,
+         * ensuring the response is in the requested language.
+         */
+        function getSystemPrompt() {
+            const langName = currentLang === 'es' ? 'Spanish (Latin American)' : 'English';
+            
+            // The model MUST use the following format with English keys for easy JS parsing,
+            // but the VALUES MUST be in the requested language (${langName}).
+            return `You are a renowned, "EVERYTHING" expert on Medellín, Colombia. Your goal is to provide a single, detailed, and highly unique "deep cut" date suggestion. Prioritize locations, activities, or venues that are known to locals, off the beaten path, or offer a distinctly authentic and exceptional experience, rather than standard tourist spots or ordinary chain restaurants. The suggestion must still be viable and runnable based on user preferences.
+            Your response MUST strictly adhere to the following key-value format. Do not include any introductory or concluding text outside this format. All VALUES MUST be in ${langName}.
+
+            Title: [Name of the Location/Activity]
+            Location: [Neighborhood or specific address/landmark in Medellín]
+            Description: [A 2-3 sentence description of the atmosphere and why it's a good date spot]
+            Hours: [Typical hours of operation, e.g., 10:00 AM - 10:00 PM]
+            BestTime: [Specific best time/day to visit for a date, e.g., Tuesday evening for fewer crowds]
+            Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low, Medium, High)]
+            `;
+        }
+
+
+        // Utility to implement exponential backoff for retries
+        async function fetchWithBackoff(url, options, maxRetries = 5) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status !== 429) { // 429 is "Too Many Requests"
+                        return response;
+                    }
+                    // Handle 429: Wait before retrying
+                    const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000); // 1s, 2s, 4s, 8s, 16s + jitter
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } catch (error) {
+                    // For network errors, wait and retry
+                    const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    if (i === maxRetries - 1) throw error; // Re-throw if last retry fails
+                }
+            }
+            throw new Error("Max retries exceeded.");
+        }
+
+        /**
+         * Parses the model's text response into a structured object.
+         */
+        function parseModelResponse(text) {
+            const data = {};
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+
+            lines.forEach(line => {
+                const [key, ...valueParts] = line.split(':');
+                if (key && valueParts.length > 0) {
+                    const value = valueParts.join(':').trim();
+                    data[key.trim()] = value;
+                }
+            });
+            return data;
+        }
+
+        /**
+         * Handles the form submission and initiates the API call.
+         */
+        async function handleGenerate(event) {
+            event.preventDefault();
+            
+            const translations = TRANSLATIONS[currentLang];
+            
+            // 1. Collect Form Data
+            const vibe = document.querySelector('input[name="vibe"]:checked').value;
+            const budget = document.querySelector('input[name="budget"]:checked').value;
+            const time = document.querySelector('input[name="time"]:checked').value;
+
+            // Instruct the model to respond in the selected language
+            const userQuery = `Suggest ONE date idea in Medellín, Colombia. The vibe should be ${vibe}, the budget is ${budget}, and the time of day is ${time}. Provide location, hours, best time to go, and crowd occupancy estimate. Respond fully in ${currentLang === 'es' ? 'Latin American Spanish' : 'English'}.`;
+
+            // 2. UI State: Loading
+            resultsContainer.classList.remove('hidden');
+            loadingSpinner.classList.remove('hidden');
+            document.getElementById('idea-content').classList.add('hidden');
+            generateButton.disabled = true;
+            buttonText.textContent = translations['button-text-loading'];
+            buttonIcon.classList.add('animate-spin');
+
+            // 3. Construct API Payload
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }], // Use search grounding for accuracy
+                systemInstruction: {
+                    parts: [{ text: getSystemPrompt() }]
+                },
+            };
+
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            };
+
+            try {
+                // 4. API Call with Backoff
+                const response = await fetchWithBackoff(API_URL, options);
+                
+                if (!response.ok) {
+                    throw new Error(`API returned status ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                     throw new Error("Received an empty or malformed response from the model.");
+                }
+
+                // 5. Parse and Display Results
+                const rawText = candidate.content.parts[0].text;
+                const dateData = parseModelResponse(rawText);
+                
+                // Set the UI fields (values are now in the correct language from the model)
+                ideaTitle.textContent = dateData.Title || translations['idea-title'];
+                locationText.textContent = dateData.Location || 'Medellín, Colombia';
+                descriptionText.textContent = dateData.Description || 'This is a fantastic place for a date.';
+                hoursText.textContent = dateData.Hours || translations['hours-text'];
+                bestTimeText.textContent = dateData.BestTime || translations['best-time-text'];
+                occupancyText.textContent = dateData.Occupancy || translations['occupancy-text'];
+
+                // Handle Citations (Grounding Sources)
+                citationBox.classList.add('hidden');
+                const groundingMetadata = candidate.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions && groundingMetadata.groundingAttributions.length > 0) {
+                    const source = groundingMetadata.groundingAttributions[0].web;
+                    if (source && source.uri && source.title) {
+                        citationLink.href = source.uri;
+                        citationLink.textContent = `${source.title} (${new URL(source.uri).hostname})`;
+                        citationBox.classList.remove('hidden');
+                    }
+                }
+                
+                // Show content
+                document.getElementById('idea-content').classList.remove('hidden');
+
+
+            } catch (error) {
+                console.error("Error fetching date suggestion:", error);
+                
+                // Display error message to user (in current language)
+                ideaTitle.textContent = currentLang === 'es' ? "¡Ups! Error al encontrar la cita..." : "Oops! Error finding a date...";
+                descriptionText.textContent = currentLang === 'es' 
+                    ? `Lo sentimos, algo salió mal al comunicarnos con la API. Error: ${error.message}. ¡Por favor, inténtalo de nuevo en un momento!`
+                    : `Sorry, something went wrong while talking to the API. Error: ${error.message}. Please try again in a moment!`;
+                
+                locationText.textContent = hoursText.textContent = bestTimeText.textContent = occupancyText.textContent = '—';
+                citationBox.classList.add('hidden');
+                document.getElementById('idea-content').classList.remove('hidden');
+
+
+            } finally {
+                // 6. UI State: Ready
+                loadingSpinner.classList.add('hidden');
+                generateButton.disabled = false;
+                buttonText.textContent = translations['button-text-default'];
+                buttonIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // --- Initialization and Event Listeners ---
+
+        // Attach event listener to the form
+        form.addEventListener('submit', handleGenerate);
+        
+        // Attach event listeners to language buttons
+        langSwitches.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const lang = e.currentTarget.getAttribute('data-lang');
+                if (lang) {
+                    switchLanguage(lang);
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize with English (default) on load
+            switchLanguage(currentLang);
+            console.log("App loaded. Ready to generate date ideas!");
+        });
+
+    </script>
+</body>
+</html>
