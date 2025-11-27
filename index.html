@@ -45,17 +45,6 @@
             background-color: #00796B;
         }
 
-        .skeleton-loader {
-            background: linear-gradient(-90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
-            background-size: 400% 400%;
-            animation: pulse-bg 1.2s infinite ease-in-out;
-        }
-
-        @keyframes pulse-bg {
-            0% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
         /* Set CSS variables for Tailwind access */
         :root {
             --primary: #009688;
@@ -70,6 +59,20 @@
         .lang-switch:not(.active) {
             background-color: transparent;
             color: var(--text-dark);
+        }
+
+        .map-link-btn {
+            @apply flex items-center justify-center p-3 rounded-xl font-semibold transition duration-150 transform hover:scale-[1.02];
+        }
+
+        .google-maps-btn {
+            /* Google Maps official colors are red, green, yellow, blue, but we'll use red for distinction */
+            @apply bg-red-500 text-white shadow-md shadow-red-500/50 hover:bg-red-600;
+        }
+
+        .apple-maps-btn {
+            /* Apple Maps uses a gray/dark theme */
+            @apply bg-gray-800 text-white shadow-md shadow-gray-500/50 hover:bg-gray-700;
         }
     </style>
 </head>
@@ -156,15 +159,27 @@
             </div>
 
             <div id="idea-content" class="text-text-light space-y-4">
+                <!-- Location/Address -->
                 <p class="text-sm font-medium text-text-light">
                     <span class="inline-block w-20 font-bold text-text-dark" data-lang-key="result-location-label" id="result-location-label-static">Location:</span> 
                     <span id="location-text"></span>
                 </p>
+
+                <!-- Map Links Section -->
+                <div id="map-links-container" class="border-t border-gray-100 pt-4">
+                    <h3 class="text-lg font-semibold text-text-dark mb-2" id="result-directions-title" data-lang-key="result-directions-title">Get Directions</h3>
+                    <div id="map-links" class="grid grid-cols-2 gap-3">
+                        <!-- Map buttons will be inserted here by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Description/Vibe -->
                 <div class="border-t border-gray-100 pt-4">
-                    <h3 class="text-lg font-semibold text-text-dark mb-2" id="result-vibe-title">The Vibe Check</h3>
+                    <h3 class="text-lg font-semibold text-text-dark mb-2" id="result-vibe-title" data-lang-key="result-vibe-title">The Vibe Check</h3>
                     <p id="description-text"></p>
                 </div>
                 
+                <!-- Timing Details -->
                 <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
                     <div>
                         <p class="text-sm font-medium text-text-light" data-lang-key="result-hours-label" id="result-hours-label-static">Hours:</p>
@@ -180,6 +195,7 @@
                     </div>
                 </div>
 
+                <!-- Citation -->
                 <div id="citation-box" class="mt-6 p-3 bg-secondary/20 rounded-lg text-xs text-text-dark hidden">
                     <p class="font-semibold mb-1" data-lang-key="result-source-label" id="result-source-label-static">Source:</p>
                     <a id="citation-link" href="#" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline truncate block"></a>
@@ -194,13 +210,22 @@
     </div>
 
     <script>
-        // --- Global State and Constants ---
-        let currentLang = 'en'; // Default language
-        
+        // --- API Configuration (CRITICAL FOR EXTERNAL DEPLOYMENT) ---
+        // INSTRUCTIONS: If running on an external website (like Netlify), 
+        // you MUST replace the placeholder below with your own Gemini API key.
         const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
-        const API_KEY = "AIzaSyB-8WFpqKUcTGpMutbFZnGIT90mYS1oEyM"; // Canvas will provide this if it's empty
+        const API_KEY_PLACEHOLDER = "YOUR_GEMINI_API_KEY_HERE";
+        
+        // This logic handles key injection in the Canvas editor vs. manual key for external deployment
+        const API_KEY = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token.length > 0) 
+            ? "" // Use empty string if in Canvas environment, letting it inject the key via fetch.
+            : API_KEY_PLACEHOLDER; 
+        
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${API_KEY}`;
         
+        // --- Global State and Constants ---
+        let currentLang = 'en'; // Default language
+
         // --- UI Element References ---
         const resultsContainer = document.getElementById('results-container');
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -218,11 +243,12 @@
         const occupancyText = document.getElementById('occupancy-text');
         const citationBox = document.getElementById('citation-box');
         const citationLink = document.getElementById('citation-link');
-        
+        const mapLinksContainer = document.getElementById('map-links');
+
         // Language elements
         const langSwitches = document.querySelectorAll('.lang-switch');
 
-        // --- Translation Data ---
+        // --- Translation Data (Updated) ---
         const TRANSLATIONS = {
             'en': {
                 'app-title': 'Citapai',
@@ -243,11 +269,16 @@
                 'button-text-loading': 'Brainstorming...',
                 'loading-text': 'Finding the perfect spot in El Poblado...',
                 'result-location-label': 'Location:',
+                'result-directions-title': 'Get Directions', 
+                'google-maps-btn': 'Google Maps', 
+                'apple-maps-btn': 'Apple Maps', 
                 'result-vibe-title': 'The Vibe Check',
                 'result-hours-label': 'Hours:',
                 'result-best-time-label': 'Best Time to Go:',
                 'result-occupancy-label': 'Current Crowd (Estimate):',
                 'result-source-label': 'Source:',
+                'error-key-title': 'API Key Missing!',
+                'error-key-desc': 'You are running this application externally. Please replace "YOUR_GEMINI_API_KEY_HERE" in the code with your own Gemini API key for it to function.',
                 'footer-text': 'Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.'
             },
             'es': {
@@ -269,18 +300,22 @@
                 'button-text-loading': 'Generando ideas...',
                 'loading-text': 'Buscando el lugar perfecto en El Poblado...',
                 'result-location-label': 'Ubicación:',
+                'result-directions-title': 'Obtener Direcciones', 
+                'google-maps-btn': 'Google Maps', 
+                'apple-maps-btn': 'Apple Maps', 
                 'result-vibe-title': 'El Ambiente',
                 'result-hours-label': 'Horario:',
                 'result-best-time-label': 'Mejor Hora:',
                 'result-occupancy-label': 'Afluencia (Estimada):',
                 'result-source-label': 'Fuente:',
+                'error-key-title': '¡Falta la Clave API!',
+                'error-key-desc': 'Está ejecutando esta aplicación externamente. Reemplace "YOUR_GEMINI_API_KEY_HERE" en el código con su propia clave API de Gemini para que funcione.',
                 'footer-text': 'Impulsado por Google Gemini API (gemini-2.5-flash-preview-09-2025) con Google Search Grounding.'
             }
         };
 
         /**
          * Updates all static text elements on the page to the selected language.
-         * @param {string} lang - 'en' or 'es'
          */
         function switchLanguage(lang) {
             currentLang = lang;
@@ -299,6 +334,7 @@
             
             // Update result labels
             document.getElementById('result-location-label-static').textContent = translations['result-location-label'];
+            document.getElementById('result-directions-title').textContent = translations['result-directions-title']; 
             document.getElementById('result-vibe-title').textContent = translations['result-vibe-title'];
             document.getElementById('result-hours-label-static').textContent = translations['result-hours-label'];
             document.getElementById('result-best-time-label-static').textContent = translations['result-best-time-label'];
@@ -310,7 +346,7 @@
             // Update data-lang-key elements (for radio button labels)
             document.querySelectorAll('[data-lang-key]').forEach(el => {
                 const key = el.getAttribute('data-lang-key');
-                // Only update labels that are not the main button
+                // Only update labels that are not the main button/footer
                 if (key !== 'button-text-default' && key !== 'loading-text' && key !== 'footer-text') {
                     el.textContent = translations[key];
                 }
@@ -330,17 +366,43 @@
         function getSystemPrompt() {
             const langName = currentLang === 'es' ? 'Spanish (Latin American)' : 'English';
             
-            // The model MUST use the following format with English keys for easy JS parsing,
-            // but the VALUES MUST be in the requested language (${langName}).
+            // NOTE: Instructing the model to provide a MapQuery field for direct navigation links
             return `You are a renowned, "EVERYTHING" expert on Medellín, Colombia. Your goal is to provide a single, detailed, and highly unique "deep cut" date suggestion. Prioritize locations, activities, or venues that are known to locals, off the beaten path, or offer a distinctly authentic and exceptional experience, rather than standard tourist spots or ordinary chain restaurants. The suggestion must still be viable and runnable based on user preferences.
             Your response MUST strictly adhere to the following key-value format. Do not include any introductory or concluding text outside this format. All VALUES MUST be in ${langName}.
 
             Title: [Name of the Location/Activity]
             Location: [Neighborhood or specific address/landmark in Medellín]
+            MapQuery: [The exact, highly specific business name and address for map searching, e.g., 'El Cielo Restaurante, Calle 7D #43a-36, El Poblado, Medellín']
             Description: [A 2-3 sentence description of the atmosphere and why it's a good date spot]
             Hours: [Typical hours of operation, e.g., 10:00 AM - 10:00 PM]
             BestTime: [Specific best time/day to visit for a date, e.g., Tuesday evening for fewer crowds]
             Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low, Medium, High)]
+            `;
+        }
+
+        /**
+         * Generates HTML for Google Maps and Apple Maps links.
+         * @param {string} query - The exact location string from the model (MapQuery).
+         * @returns {string} The HTML string for the buttons.
+         */
+        function createMapLinksHtml(query) {
+            const encodedQuery = encodeURIComponent(query);
+            const translations = TRANSLATIONS[currentLang];
+
+            // Google Maps URL format: searches for the query
+            const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
+            // Apple Maps URL format: searches for the query
+            const appleMapsUrl = `https://maps.apple.com/?q=${encodedQuery}`;
+            
+            return `
+                <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="map-link-btn google-maps-btn">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    ${translations['google-maps-btn']}
+                </a>
+                <a href="${appleMapsUrl}" target="_blank" rel="noopener noreferrer" class="map-link-btn apple-maps-btn">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0zM12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>
+                    ${translations['apple-maps-btn']}
+                </a>
             `;
         }
 
@@ -391,6 +453,20 @@
             
             const translations = TRANSLATIONS[currentLang];
             
+            // --- CRITICAL CHECK FOR EXTERNAL DEPLOYMENT ---
+            if (API_KEY === API_KEY_PLACEHOLDER) {
+                // If the key is the placeholder, display the instructional error instead of calling the API
+                resultsContainer.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+                document.getElementById('idea-content').classList.remove('hidden');
+                ideaTitle.textContent = translations['error-key-title'];
+                descriptionText.innerHTML = translations['error-key-desc'];
+                locationText.textContent = hoursText.textContent = bestTimeText.textContent = occupancyText.textContent = '—';
+                mapLinksContainer.innerHTML = '';
+                citationBox.classList.add('hidden');
+                return; 
+            }
+            
             // 1. Collect Form Data
             const vibe = document.querySelector('input[name="vibe"]:checked').value;
             const budget = document.querySelector('input[name="budget"]:checked').value;
@@ -406,6 +482,7 @@
             generateButton.disabled = true;
             buttonText.textContent = translations['button-text-loading'];
             buttonIcon.classList.add('animate-spin');
+            mapLinksContainer.innerHTML = ''; // Clear previous map links
 
             // 3. Construct API Payload
             const payload = {
@@ -427,7 +504,8 @@
                 const response = await fetchWithBackoff(API_URL, options);
                 
                 if (!response.ok) {
-                    throw new Error(`API returned status ${response.status}: ${response.statusText}`);
+                    const errorMessage = `API returned status ${response.status}: ${response.statusText}`;
+                    throw new Error(errorMessage);
                 }
 
                 const result = await response.json();
@@ -442,12 +520,17 @@
                 const dateData = parseModelResponse(rawText);
                 
                 // Set the UI fields (values are now in the correct language from the model)
-                ideaTitle.textContent = dateData.Title || translations['idea-title'];
+                ideaTitle.textContent = dateData.Title || (currentLang === 'es' ? 'Sugerencia de Cita' : 'Date Suggestion');
                 locationText.textContent = dateData.Location || 'Medellín, Colombia';
-                descriptionText.textContent = dateData.Description || 'This is a fantastic place for a date.';
-                hoursText.textContent = dateData.Hours || translations['hours-text'];
-                bestTimeText.textContent = dateData.BestTime || translations['best-time-text'];
-                occupancyText.textContent = dateData.Occupancy || translations['occupancy-text'];
+                descriptionText.textContent = dateData.Description || (currentLang === 'es' ? 'Este es un lugar fantástico para una cita.' : 'This is a fantastic place for a date.');
+                hoursText.textContent = dateData.Hours || '—';
+                bestTimeText.textContent = dateData.BestTime || '—';
+                occupancyText.textContent = dateData.Occupancy || '—';
+
+                // NEW: Generate Map Links using MapQuery
+                const mapQuery = dateData.MapQuery || dateData.Title || dateData.Location || 'Medellín, Colombia';
+                mapLinksContainer.innerHTML = createMapLinksHtml(mapQuery);
+
 
                 // Handle Citations (Grounding Sources)
                 citationBox.classList.add('hidden');
@@ -470,11 +553,18 @@
                 
                 // Display error message to user (in current language)
                 ideaTitle.textContent = currentLang === 'es' ? "¡Ups! Error al encontrar la cita..." : "Oops! Error finding a date...";
+                
+                // Use the explicit error message from the API call
+                const userErrorMessage = error.message.includes('403') 
+                    ? (currentLang === 'es' ? "Error 403 (Prohibido/Acceso denegado). El problema es con la clave API. Vuelva a verificar la variable 'API_KEY_PLACEHOLDER'." : "Error 403 (Forbidden/Access denied). The problem is likely with the API key. Please re-check the 'API_KEY_PLACEHOLDER' variable.")
+                    : error.message;
+
                 descriptionText.textContent = currentLang === 'es' 
-                    ? `Lo sentimos, algo salió mal al comunicarnos con la API. Error: ${error.message}. ¡Por favor, inténtalo de nuevo en un momento!`
-                    : `Sorry, something went wrong while talking to the API. Error: ${error.message}. Please try again in a moment!`;
+                    ? `Lo sentimos, algo salió mal al comunicarnos con la API. Error: ${userErrorMessage}. ¡Por favor, inténtalo de nuevo en un momento!`
+                    : `Sorry, something went wrong while talking to the API. Error: ${userErrorMessage}. Please try again in a moment!`;
                 
                 locationText.textContent = hoursText.textContent = bestTimeText.textContent = occupancyText.textContent = '—';
+                mapLinksContainer.innerHTML = ''; // Clear map links on error
                 citationBox.classList.add('hidden');
                 document.getElementById('idea-content').classList.remove('hidden');
 
@@ -506,7 +596,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize with English (default) on load
             switchLanguage(currentLang);
-            console.log("App loaded. Ready to generate date ideas!");
+            
+            // Final check on API Key state when loading externally
+            if (API_KEY === API_KEY_PLACEHOLDER) {
+                console.warn("API Key is missing. Please replace 'YOUR_GEMINI_API_KEY_HERE' with your actual key for external deployment.");
+            }
         });
 
     </script>
