@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="app-title-tag">Citapai - Medellín Dates</title>
-    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
+                        // Colors from the new, better design
                         'primary': '#009688', // Teal/Paisa-friendly color
                         'secondary': '#80CBC4',
                         'background': '#F4F4F9',
@@ -33,214 +35,278 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .input-radio:checked + label {
-            background-color: var(--primary);
-            color: #FFFFFF;
+        /* Custom radio button styling */
+        .custom-radio-label {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid #E0E0E0;
+            color: var(--text-dark);
+        }
+        .custom-radio-input:checked + .custom-radio-label {
+            border-color: #009688;
+            background-color: #E0F2F1; /* Light teal background */
+            box-shadow: 0 0 5px rgba(0, 150, 136, 0.5);
             font-weight: 600;
-            border-color: var(--primary);
+        }
+        .custom-radio-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
 
-        .input-radio:checked + label:hover {
-            background-color: #00796B;
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #009688;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
-        /* Set CSS variables for Tailwind access */
-        :root {
-            --primary: #009688;
-        }
-        
         /* Language Toggle Active State */
         .lang-switch.active {
-            background-color: var(--primary);
+            background-color: #009688;
             color: #FFFFFF;
             box-shadow: 0 2px 5px rgba(0, 150, 136, 0.4);
         }
         .lang-switch:not(.active) {
             background-color: transparent;
-            color: var(--text-dark);
-        }
-
-        .map-link-btn {
-            @apply flex items-center justify-center p-3 rounded-xl font-semibold transition duration-150 transform hover:scale-[1.02];
-        }
-
-        .google-maps-btn {
-            /* Google Maps official colors are red, green, yellow, blue, but we'll use red for distinction */
-            @apply bg-red-500 text-white shadow-md shadow-red-500/50 hover:bg-red-600;
-        }
-
-        .apple-maps-btn {
-            /* Apple Maps uses a gray/dark theme */
-            @apply bg-gray-800 text-white shadow-md shadow-gray-500/50 hover:bg-gray-700;
+            color: #212121;
         }
         
-        /* Style for the new shuffle button */
-        #shuffle-button {
-            @apply w-full bg-secondary text-text-dark py-3 rounded-xl font-bold text-lg hover:bg-teal-200 transition duration-200 shadow-md shadow-teal-300/50 flex items-center justify-center space-x-2 mt-4;
+        /* Map specific styles */
+        #map-iframe {
+            border-radius: 8px;
+            width: 100%;
+            height: 250px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
         }
     </style>
 </head>
-<body class="bg-background min-h-screen p-4 flex flex-col items-center font-sans">
+<body class="bg-background min-h-screen p-4 sm:p-8 flex justify-center items-start font-sans">
 
-    <!-- Main Container --><div class="w-full max-w-lg">
+    <div class="w-full max-w-xl">
+        
+        <!-- Header -->
         <header class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-text-dark" id="app-title">Citapai</h1>
-            <p class="text-text-light mt-1" id="app-subtitle">Find the perfect date spot in Medellín.</p>
+            <h1 class="text-4xl font-extrabold text-primary mb-2">Citapai</h1>
+            <p class="text-text-light" id="subtitle">The ultimate Medellín Date Idea Generator</p>
+            
+            <!-- Language Switcher -->
+            <div class="flex justify-center space-x-2 mt-4">
+                <div class="inline-flex rounded-xl bg-gray-200 p-1 space-x-1">
+                    <button class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg transition duration-150 active" data-lang="en" id="lang-en">English</button>
+                    <button class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg transition duration-150" data-lang="es" id="lang-es">Español</button>
+                </div>
+            </div>
         </header>
 
-        <!-- Language Toggle Switch --><div class="flex justify-center mb-6">
-            <div class="inline-flex rounded-xl bg-gray-200 p-1 space-x-1">
-                <button id="lang-en" class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg active transition duration-150" data-lang="en">English</button>
-                <button id="lang-es" class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg transition duration-150" data-lang="es">Español</button>
-            </div>
-        </div>
-
-        <!-- Input Panel (The Vibe Filter) --><div class="bg-card p-6 rounded-xl card-glow mb-8">
-            <!-- Centered Header -->
-            <h2 class="text-xl font-semibold mb-4 text-text-dark text-center" id="vibe-title">Set the Vibe</h2>
+        <!-- Main Card -->
+        <div class="bg-card p-6 sm:p-8 rounded-xl shadow-lg card-glow">
             
-            <form id="date-vibe-form" class="space-y-4">
-                <!-- Vibe Selector --><div>
-                    <!-- Centered Label -->
-                    <label class="block text-sm font-medium text-text-light mb-2 text-center" id="label-atmosphere">Atmosphere</label>
-                    <div class="flex space-x-2 md:space-x-3">
-                        <input type="radio" id="vibe-chill" name="vibe" value="Chill and Cozy" class="input-radio hidden" checked>
-                        <label for="vibe-chill" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="vibe-chill">Chill & Cozy</label>
-                        
-                        <input type="radio" id="vibe-lively" name="vibe" value="Lively and Social" class="input-radio hidden">
-                        <label for="vibe-lively" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="vibe-lively">Lively & Social</label>
+            <form id="idea-form">
+                
+                <!-- Date Type (Omitted for brevity, assuming standard form inputs) -->
 
-                        <input type="radio" id="vibe-cultural" name="vibe" value="Cultural and Intellectual" class="input-radio hidden">
-                        <label for="vibe-cultural" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="vibe-cultural">Cultural & Intellectual</label>
+                <!-- Time of Day (Omitted for brevity, assuming standard form inputs) -->
+                
+                <!-- Atmosphere (Omitted for brevity, assuming standard form inputs) -->
+
+                <!-- Price (Omitted for brevity, assuming standard form inputs) -->
+                
+                <!-- Full Form Content Reinserted for completeness -->
+                <!-- Date Type -->
+                <div class="mb-6">
+                    <label for="date-type" class="block text-text-dark font-semibold mb-2 text-center" id="label-date-type">Type of Date / Tipo de Cita</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="radio" id="type-adventurous" name="date-type" value="Adventurous (Outdoors, Active)" class="custom-radio-input" checked>
+                        <label for="type-adventurous" class="custom-radio-label block p-3 rounded-lg text-center font-medium">
+                            <span id="type-adventurous-text">Adventurous</span>
+                            <span class="text-xs text-text-light block">(Outdoors, Active)</span>
+                        </label>
+                        <input type="radio" id="type-relaxing" name="date-type" value="Relaxing (Chill, Indoor)" class="custom-radio-input">
+                        <label for="type-relaxing" class="custom-radio-label block p-3 rounded-lg text-center font-medium">
+                            <span id="type-relaxing-text">Relaxing</span>
+                            <span class="text-xs text-text-light block">(Chill, Indoor)</span>
+                        </label>
+                        <input type="radio" id="type-cultural" name="date-type" value="Cultural (Art, History, Music)" class="custom-radio-input">
+                        <label for="type-cultural" class="custom-radio-label block p-3 rounded-lg text-center font-medium">
+                            <span id="type-cultural-text">Cultural</span>
+                            <span class="text-xs text-text-light block">(Art, History, Music)</span>
+                        </label>
+                        <input type="radio" id="type-foodie" name="date-type" value="Foodie (Gastronomy, Drinks)" class="custom-radio-input">
+                        <label for="type-foodie" class="custom-radio-label block p-3 rounded-lg text-center font-medium">
+                            <span id="type-foodie-text">Foodie</span>
+                            <span class="text-xs text-text-light block">(Gastronomy, Drinks)</span>
+                        </label>
                     </div>
                 </div>
 
-                <!-- Budget Selector --><div>
-                    <!-- Centered Label -->
-                    <label class="block text-sm font-medium text-text-light mb-2 text-center" id="label-budget">Budget</label>
-                    <div class="flex space-x-2 md:space-x-3">
-                        <input type="radio" id="budget-friendly" name="budget" value="Budget-Friendly" class="input-radio hidden" checked>
-                        <label for="budget-friendly" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="budget-friendly">💸 Budget</label>
-                        
-                        <input type="radio" id="budget-mid" name="budget" value="Mid-Range" class="input-radio hidden">
-                        <label for="budget-mid" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="budget-mid">💰 Mid-Range</label>
-
-                        <input type="radio" id="budget-splurge" name="budget" value="Splurge" class="input-radio hidden">
-                        <label for="budget-splurge" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="budget-splurge">💎 Splurge</label>
+                <!-- Time of Day -->
+                <div class="mb-6">
+                    <label for="time-of-day" class="block text-text-dark font-semibold mb-2 text-center" id="label-time-of-day">Time of Day / Hora del Día</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <input type="radio" id="time-morning" name="time-of-day" value="Morning (10 AM to 1 PM)" class="custom-radio-input" checked>
+                        <label for="time-morning" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="time-morning-text">Morning</label>
+                        <input type="radio" id="time-afternoon" name="time-of-day" value="Afternoon (1 PM to 6 PM)" class="custom-radio-input">
+                        <label for="time-afternoon" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="time-afternoon-text">Afternoon</label>
+                        <input type="radio" id="time-evening" name="time-of-day" value="Evening (6 PM to 10 PM)" class="custom-radio-input">
+                        <label for="time-evening" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="time-evening-text">Evening</label>
                     </div>
                 </div>
 
-                <!-- Time of Day Selector --><div>
-                    <!-- Centered Label -->
-                    <label class="block text-sm font-medium text-text-light mb-2 text-center" id="label-time">When are you going?</label>
-                    <div class="flex space-x-2 md:space-x-3">
-                        <input type="radio" id="time-day" name="time" value="Daytime (12 PM to 5 PM)" class="input-radio hidden" checked>
-                        <label for="time-day" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="time-day">☀️ Daytime</label>
-                        
-                        <input type="radio" id="time-night" name="time" value="Nighttime (6 PM to 10 PM)" class="input-radio hidden">
-                        <label for="time-night" class="flex-1 text-center py-2 px-3 border border-gray-300 rounded-lg cursor-pointer text-sm transition-colors duration-200 hover:bg-gray-50" data-lang-key="time-night">🌙 Nighttime</label>
+                <!-- Atmosphere -->
+                <div class="mb-6">
+                    <label for="atmosphere" class="block text-text-dark font-semibold mb-2 text-center" id="label-atmosphere">Atmosphere / Atmosfera</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <input type="radio" id="atmos-romantic" name="atmosphere" value="Romantic" class="custom-radio-input" checked>
+                        <label for="atmos-romantic" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="atmos-romantic-text">Romantic</label>
+                        <input type="radio" id="atmos-casual" name="atmosphere" value="Casual" class="custom-radio-input">
+                        <label for="atmos-casual" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="atmos-casual-text">Casual</label>
+                        <input type="radio" id="atmos-lively" name="atmosphere" value="Lively" class="custom-radio-input">
+                        <label for="atmos-lively" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="atmos-lively-text">Lively</label>
+                        <input type="radio" id="atmos-chill" name="atmosphere" value="Chill" class="custom-radio-input">
+                        <label for="atmos-chill" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="atmos-chill-text">Chill</label>
                     </div>
                 </div>
 
-                <button type="submit" id="generate-button" class="w-full bg-primary text-white py-3 rounded-xl font-bold text-lg hover:bg-teal-700 transition duration-200 shadow-lg shadow-teal-500/50 flex items-center justify-center space-x-2">
-                    <svg id="button-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15.75L4.75 9.5m0 0l-1.5-1.5m1.5 1.5l1.5 1.5m8.5 0l1.5 1.5M16 4.75L9.75 11m0 0l-1.5 1.5m1.5-1.5l1.5-1.5"></path></svg>
-                    <span id="button-text" data-lang-key="button-text-default">Get a Medellín Date Suggestion!</span>
-                </button>
+                <!-- Price -->
+                <div class="mb-6">
+                    <label for="price" class="block text-text-dark font-semibold mb-2 text-center" id="label-price">Price / Precio</label>
+                    <div class="flex space-x-4 justify-center">
+                        <input type="radio" id="price-1" name="price" value="low cost" class="custom-radio-input">
+                        <label for="price-1" class="custom-radio-label flex items-center justify-center w-12 h-12 rounded-full font-bold">
+                            <span class="text-text-light" id="price-label-1">$</span>
+                        </label>
+                        <input type="radio" id="price-2" name="price" value="mid range" class="custom-radio-input" checked>
+                        <label for="price-2" class="custom-radio-label flex items-center justify-center w-12 h-12 rounded-full font-bold">
+                            <span class="text-text-light" id="price-label-2">$$</span>
+                        </label>
+                        <input type="radio" id="price-3" name="price" value="high end" class="custom-radio-input">
+                        <label for="price-3" class="custom-radio-label flex items-center justify-center w-12 h-12 rounded-full font-bold">
+                            <span class="text-text-light" id="price-label-3">$$$</span>
+                        </label>
+                        <input type="radio" id="price-4" name="price" value="luxury" class="custom-radio-input">
+                        <label for="price-4" class="custom-radio-label flex items-center justify-center w-12 h-12 rounded-full font-bold">
+                            <span class="text-text-light" id="price-label-4">$$$$</span>
+                        </label>
+                    </div>
+                </div>
+
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <button type="submit" id="generate-button" class="flex-1 bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-200 shadow-md flex items-center justify-center space-x-2">
+                         <svg id="button-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15.75L4.75 9.5m0 0l-1.5-1.5m1.5 1.5l1.5 1.5m8.5 0l1.5 1.5M16 4.75L9.75 11m0 0l-1.5 1.5m1.5-1.5l1.5-1.5"></path></svg>
+                        <span id="button-text">Generate Idea</span>
+                    </button>
+                    <!-- Shuffle Button (Visible only after first run) -->
+                    <button type="button" id="shuffle-button" class="sm:w-1/3 bg-gray-200 text-text-dark font-bold py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors duration-200 shadow-md hidden flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0h5m1.25 10.5h4.996m2.383-2.383h-3.375m0 0a8.001 8.001 0 01-15.356-2.091"></path></svg>
+                        <span id="shuffle-button-text">Shuffle</span>
+                    </button>
+                </div>
             </form>
-        </div>
 
-        <!-- Output Card (Results) --><div id="results-container" class="hidden bg-card p-6 rounded-xl card-glow">
-            <!-- Centered Title -->
-            <h2 class="text-2xl font-bold text-primary mb-4 text-center" id="idea-title"></h2>
-            
-            <div id="loading-spinner" class="hidden text-center py-10">
-                <div class="flex justify-center items-center space-x-2">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <span class="text-text-light" id="loading-text" data-lang-key="loading-text">Finding the perfect spot in El Poblado...</span>
-                </div>
+            <!-- Loading Indicator -->
+            <div id="loading-indicator" class="hidden flex justify-center items-center py-6">
+                <div class="spinner mr-3"></div>
+                <span class="text-text-light" id="loading-text">Generating a perfect date...</span>
             </div>
 
-            <div id="idea-content" class="text-text-light space-y-4">
+            <!-- Idea Output Card -->
+            <div id="results-container" class="hidden mt-8 p-6 bg-secondary/10 border border-secondary rounded-xl shadow-lg card-glow space-y-4">
                 
-                <!-- Location/Address (CENTERED) --><p class="text-sm font-medium text-text-light text-center">
-                    <span class="font-bold text-text-dark" data-lang-key="result-location-label" id="result-location-label-static">Location:</span> 
-                    <span id="location-text"></span>
-                </p>
-
-                <!-- Map Links Section (CENTERED) --><div id="map-links-container" class="border-t border-gray-100 pt-4 text-center">
-                    <h3 class="text-lg font-semibold text-text-dark mb-2" id="result-directions-title" data-lang-key="result-directions-title">Get Directions</h3>
-                    <div id="map-links" class="grid grid-cols-2 gap-3 max-w-xs mx-auto">
-                        <!-- Map buttons will be inserted here by JavaScript --></div>
-                </div>
-
-                <!-- Description/Vibe --><div class="border-t border-gray-100 pt-4">
-                    <!-- Centered Vibe Check Title -->
-                    <h3 class="text-lg font-semibold text-text-dark mb-2 text-center" id="result-vibe-title" data-lang-key="result-vibe-title">The Vibe Check</h3>
-                    <p id="description-text"></p>
+                <!-- Title (Centered) -->
+                <h2 class="text-2xl font-bold text-primary mb-4 text-center" id="idea-title"></h2>
+                
+                <!-- Description/Vibe -->
+                <div class="border-b border-gray-200 pb-4">
+                    <h3 class="text-lg font-semibold text-text-dark mb-2 text-center" id="result-vibe-title">The Vibe Check</h3>
+                    <p id="description-text" class="text-text-dark leading-relaxed"></p>
                 </div>
                 
-                <!-- Timing Details --><div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                <!-- Location & Map Embed/Link -->
+                <div class="border-t border-gray-200 pt-4">
+                    <h3 class="text-lg font-semibold text-text-dark mb-2 text-center" id="result-location-label-static">Location Details</h3>
+                    
+                    <!-- Location Text -->
+                    <p id="location-text" class="text-text-dark font-semibold text-center mb-3"></p>
+
+                    <!-- Link Container (Fallback/Alternative) -->
+                    <div id="map-link-container" class="text-center mb-3 hidden">
+                        <a id="map-link" href="#" target="_blank" rel="noopener noreferrer" class="bg-primary hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center transition-colors text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span id="map-link-text">Open in Google Maps</span>
+                        </a>
+                        <p id="map-trouble-message" class="text-xs text-red-700 mt-2 hidden"></p>
+                    </div>
+                    
+                    <!-- MAP EMBED IFRAME (Still included, but may fail due to key restrictions) -->
+                    <iframe id="map-iframe" class="hidden" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+
+                <!-- Timing Details -->
+                <div class="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4">
                     <div>
-                        <p class="text-sm font-medium text-text-light" data-lang-key="result-hours-label" id="result-hours-label-static">Hours:</p>
+                        <p class="text-sm font-medium text-text-light" id="result-hours-label-static">Hours:</p>
                         <p class="text-text-dark font-semibold" id="hours-text"></p>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-text-light" data-lang-key="result-best-time-label" id="result-best-time-label-static">Best Time to Go:</p>
+                        <p class="text-sm font-medium text-text-light" id="result-best-time-label-static">Best Time to Go:</p>
                         <p class="text-text-dark font-semibold" id="best-time-text"></p>
                     </div>
-                    <div class="col-span-2 text-center"> <!-- This ensures the occupancy estimate label is centered -->
-                        <p class="text-sm font-medium text-text-light" data-lang-key="result-occupancy-label" id="result-occupancy-label-static">Current Crowd (Estimate):</p>
+                    <div class="col-span-2 text-center">
+                        <p class="text-sm font-medium text-text-light" id="result-occupancy-label-static">Current Crowd (Estimate):</p>
                         <p class="text-text-dark font-semibold" id="occupancy-text"></p>
                     </div>
                 </div>
 
-                <!-- Citation --><div id="citation-box" class="mt-6 p-3 bg-secondary/20 rounded-lg text-xs text-text-dark hidden">
-                    <p class="font-semibold mb-1" data-lang-key="result-source-label" id="result-source-label-static">Source:</p>
+                <!-- Citation -->
+                <div id="citation-box" class="mt-6 p-3 bg-secondary/20 rounded-lg text-xs text-text-dark hidden">
+                    <p class="font-semibold mb-1" id="result-source-label-static">Source:</p>
                     <a id="citation-link" href="#" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline truncate block"></a>
                 </div>
             </div>
         </div>
         
-        <!-- NEW SHUFFLE BUTTON --><button id="shuffle-button" class="hidden">
-            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0h5m1.25 10.5h4.996m2.383-2.383h-3.375m0 0a8.001 8.001 0 01-15.356-2.091"></path></svg>
-            <span id="shuffle-button-text" data-lang-key="shuffle-button-text">Try Another Suggestion (Shuffle)</span>
-        </button>
-
-        <!-- Footer / API Info --><footer class="mt-8 text-center text-xs text-gray-500">
-            <p id="footer-text" data-lang-key="footer-text">Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.</p>
+        <!-- Footer / API Info -->
+        <footer class="mt-8 text-center text-xs text-gray-500">
+            <p id="footer-text">Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.</p>
         </footer>
     </div>
 
     <script>
-        // --- API Configuration (CRITICAL FOR EXTERNAL DEPLOYMENT) ---
-        // INSTRUCTIONS: If running on an external website (like Netlify), 
-        // you MUST replace the placeholder below with your own Gemini API key.
+        // --- API Configuration ---
         const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
-        const OLD_API_KEY_PLACEHOLDER_STRING = "YOUR_GEMINI_API_KEY_HERE";
         
-        // **IMPORTANT: 1. Ensure this key is correct and valid.**
-        // **2. It must be a Browser API key with the Gemini API enabled.**
-        const API_KEY_PLACEHOLDER = "AIzaSyAqJxMU5XC6MeDrcUx4YDqXZZxtvwnkCTk"; // <-- Your key here
-
+        // --- IMPORTANT: PASTE YOUR AUTHORIZED GOOGLE MAPS EMBED API KEY HERE ---
+        const MAPS_API_KEY = "AIzaSyCzDF_B6hsSQyrvrgJrfZ7vAnGSWiQXE-4"; 
         
-        // This logic handles key injection in the Canvas editor vs. manual key for external deployment
+        // Logic for Gemini API Key handling in Canvas environment
+        const API_KEY_PLACEHOLDER = "AIzaSyAqJxMU5XC6MeDrcUx4YDqXZZxtvwnkCTk"; // Placeholder for external use
         const API_KEY = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token.length > 0) 
             ? "" // Use empty string if in Canvas environment, letting it inject the key via fetch.
-            : API_KEY_PLACEHOLDER; 
+            : API_KEY_PLACEHOLDER;
         
-        // Construct the URL. Append the API key only if it's explicitly provided (for external deployment).
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent${API_KEY ? `?key=${API_KEY}` : ''}`;
         
         // --- Global State and Constants ---
-        let currentLang = 'en'; // Default language
+        let currentLang = 'en';
 
         // --- UI Element References ---
         const resultsContainer = document.getElementById('results-container');
-        const loadingSpinner = document.getElementById('loading-spinner');
+        const loadingIndicator = document.getElementById('loading-indicator');
         const generateButton = document.getElementById('generate-button');
-        const shuffleButton = document.getElementById('shuffle-button'); // NEW
+        const shuffleButton = document.getElementById('shuffle-button');
         const buttonText = document.getElementById('button-text');
-        const form = document.getElementById('date-vibe-form');
+        const form = document.getElementById('idea-form');
         const buttonIcon = document.getElementById('button-icon');
         
         // Output elements
@@ -252,206 +318,122 @@
         const occupancyText = document.getElementById('occupancy-text');
         const citationBox = document.getElementById('citation-box');
         const citationLink = document.getElementById('citation-link');
-        const mapLinksContainer = document.getElementById('map-links');
+        const mapIframe = document.getElementById('map-iframe');
+        const mapLinkContainer = document.getElementById('map-link-container'); // New
+        const mapLink = document.getElementById('map-link');                   // New
+        const mapLinkText = document.getElementById('map-link-text');         // New
+        const mapTroubleMessage = document.getElementById('map-trouble-message'); // New
 
         // Language elements
         const langSwitches = document.querySelectorAll('.lang-switch');
 
-        // --- Translation Data (Updated) ---
+        // --- Translation Data (Updated with Map Fallback strings) ---
         const TRANSLATIONS = {
             'en': {
                 'app-title': 'Citapai',
-                'app-subtitle': 'Find the perfect date spot in Medellín.',
-                'vibe-title': 'Set the Vibe',
-                'label-atmosphere': 'Atmosphere',
-                'vibe-chill': 'Chill & Cozy',
-                'vibe-lively': 'Lively & Social',
-                'vibe-cultural': 'Cultural & Intellectual',
-                'label-budget': 'Budget',
-                'budget-friendly': '💸 Budget',
-                'budget-mid': '💰 Mid-Range',
-                'budget-splurge': '💎 Splurge',
-                'label-time': 'When are you going?',
-                'time-day': '☀️ Daytime',
-                'time-night': '🌙 Nighttime',
-                'button-text-default': 'Get a Medellín Date Suggestion!',
+                'app-subtitle': 'The ultimate Medellín Date Idea Generator',
+                'label-date-type': 'Type of Date / Tipo de Cita',
+                'type-adventurous': 'Adventurous',
+                'type-relaxing': 'Relaxing',
+                'type-cultural': 'Cultural',
+                'type-foodie': 'Foodie',
+                'label-time-of-day': 'Time of Day / Hora del Día',
+                'time-morning': 'Morning',
+                'time-afternoon': 'Afternoon',
+                'time-evening': 'Evening',
+                'label-atmosphere': 'Atmosphere / Atmosfera',
+                'atmos-romantic': 'Romantic',
+                'atmos-casual': 'Casual',
+                'atmos-lively': 'Lively',
+                'atmos-chill': 'Chill',
+                'label-price': 'Price / Precio',
+                'price-label-1': '$',
+                'price-label-2': '$$',
+                'price-label-3': '$$$',
+                'price-label-4': '$$$$',
+                'button-text-default': 'Generate Idea',
                 'button-text-loading': 'Brainstorming...',
-                'shuffle-button-text': 'Try Another Suggestion (Shuffle)', // NEW
-                'loading-text': 'Finding the perfect spot in El Poblado...',
-                'result-location-label': 'Location:',
-                'result-directions-title': 'Get Directions', 
-                'google-maps-btn': 'Google Maps', 
-                'apple-maps-btn': 'Apple Maps', 
+                'shuffle-button-text': 'Shuffle',
+                'loading-text': 'Generating a perfect date...',
+                'result-location-label': 'Location Details',
                 'result-vibe-title': 'The Vibe Check',
                 'result-hours-label': 'Hours:',
                 'result-best-time-label': 'Best Time to Go:',
                 'result-occupancy-label': 'Current Crowd (Estimate):',
                 'result-source-label': 'Source:',
-                'error-api-title': 'API Request Failed', // Updated title
-                'error-generic-desc': 'If the problem persists, please check the console for details or try refining your input to ensure the request meets safety guidelines.', // New generic advice
-                'error-key-desc': 'The request failed. If you see status 400 or 403, your API key is likely invalid, has not been enabled for the Gemini API service, or is not a Browser Key. Please verify your key.',
-                'footer-text': 'Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.'
+                'error-api-title': 'API Request Failed',
+                'error-generic-desc': 'Could not generate a date idea. Please try again or refine your input.',
+                'error-key-desc': 'Request failed. Your API key may be invalid or unauthorized for the requested service (Gemini or Maps).',
+                'footer-text': 'Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.',
+                'map-link-text': 'Open in Google Maps',
+                'map-trouble-message': 'If the map below is blank, your Maps Embed API Key may need activation or domain authorization. Use the link above!'
             },
             'es': {
                 'app-title': 'Citapai',
-                'app-subtitle': 'Encuentra el lugar perfecto para tu cita en Medellín.',
-                'vibe-title': 'Elige el Ambiente',
-                'label-atmosphere': 'Atmósfera',
-                'vibe-chill': 'Relajado y Acogedor',
-                'vibe-lively': 'Animado y Social',
-                'vibe-cultural': 'Cultural e Intelectual',
-                'label-budget': 'Presupuesto',
-                'budget-friendly': '💸 Económico',
-                'budget-mid': '💰 Rango Medio',
-                'budget-splurge': '💎 Derroche',
-                'label-time': '¿Cuándo vas a ir?',
-                'time-day': '☀️ Día',
-                'time-night': '🌙 Noche',
-                'button-text-default': '¡Obtén una Sugerencia de Cita en Medellín!',
+                'app-subtitle': 'El generador definitivo de ideas para citas en Medellín',
+                'label-date-type': 'Tipo de Cita / Type of Date',
+                'type-adventurous': 'Aventura',
+                'type-relaxing': 'Relajante',
+                'type-cultural': 'Cultural',
+                'type-foodie': 'Gastronómica',
+                'label-time-of-day': 'Hora del Día / Time of Day',
+                'time-morning': 'Mañana',
+                'time-afternoon': 'Tarde',
+                'time-evening': 'Noche',
+                'label-atmosphere': 'Atmósfera / Atmosphere',
+                'atmos-romantic': 'Romántica',
+                'atmos-casual': 'Casual',
+                'atmos-lively': 'Animada',
+                'atmos-chill': 'Tranquila',
+                'label-price': 'Precio / Price',
+                'price-label-1': '$',
+                'price-label-2': '$$',
+                'price-label-3': '$$$',
+                'price-label-4': '$$$$',
+                'button-text-default': 'Generar Idea',
                 'button-text-loading': 'Generando ideas...',
-                'shuffle-button-text': 'Probar Otra Sugerencia (Barajar)', // NEW
-                'loading-text': 'Buscando el lugar perfecto en El Poblado...',
-                'result-location-label': 'Ubicación:',
-                'result-directions-title': 'Obtener Direcciones', 
-                'google-maps-btn': 'Google Maps', 
-                'apple-maps-btn': 'Apple Maps', 
+                'shuffle-button-text': 'Barajar',
+                'loading-text': 'Buscando una cita perfecta...',
+                'result-location-label': 'Detalles de Ubicación',
                 'result-vibe-title': 'El Ambiente',
                 'result-hours-label': 'Horario:',
                 'result-best-time-label': 'Mejor Hora:',
                 'result-occupancy-label': 'Afluencia (Estimada):',
                 'result-source-label': 'Fuente:',
-                'error-api-title': 'Solicitud API Fallida', // Updated title
-                'error-generic-desc': 'Si el problema persiste, verifique la consola para obtener detalles o intente refinar su entrada para asegurarse de que la solicitud cumpla con las pautas de seguridad.', // New generic advice
-                'error-key-desc': 'La solicitud falló. Si ve el estado 400 o 403, es probable que su clave API no sea válida, no esté habilitada para el servicio Gemini API o no sea una clave de navegador. Verifique su clave.',
-                'footer-text': 'Impulsado por Google Gemini API (gemini-2.5-flash-preview-09-2025) con Google Search Grounding.'
+                'error-api-title': 'Solicitud API Fallida',
+                'error-generic-desc': 'No se pudo generar una idea de cita. Inténtalo de nuevo o refina tu entrada.',
+                'error-key-desc': 'La solicitud falló. Su clave API puede ser inválida o no estar autorizada para el servicio solicitado (Gemini o Maps).',
+                'footer-text': 'Impulsado por Google Gemini API (gemini-2.5-flash-preview-09-2025) con Google Search Grounding.',
+                'map-link-text': 'Abrir en Google Maps',
+                'map-trouble-message': 'Si el mapa de abajo está en blanco, su clave Maps Embed API podría requerir activación o autorización de dominio. ¡Use el enlace de arriba!'
             }
         };
 
         /**
-         * Updates all static text elements on the page to the selected language.
-         */
-        function switchLanguage(lang) {
-            currentLang = lang;
-            const translations = TRANSLATIONS[lang];
-
-            // Update simple IDs
-            document.getElementById('app-title-tag').textContent = translations['app-title'] + (lang === 'en' ? ' - Medellín Dates' : '');
-            document.getElementById('app-title').textContent = translations['app-title'];
-            document.getElementById('app-subtitle').textContent = translations['app-subtitle'];
-            document.getElementById('vibe-title').textContent = translations['vibe-title'];
-            document.getElementById('label-atmosphere').textContent = translations['label-atmosphere'];
-            document.getElementById('label-budget').textContent = translations['label-budget'];
-            document.getElementById('label-time').textContent = translations['label-time'];
-            document.getElementById('button-text').textContent = translations['button-text-default'];
-            document.getElementById('loading-text').textContent = translations['loading-text'];
-            document.getElementById('shuffle-button-text').textContent = translations['shuffle-button-text']; // NEW
-            
-            // Update result labels
-            document.getElementById('result-location-label-static').textContent = translations['result-location-label'];
-            document.getElementById('result-directions-title').textContent = translations['result-directions-title']; 
-            document.getElementById('result-vibe-title').textContent = translations['result-vibe-title'];
-            document.getElementById('result-hours-label-static').textContent = translations['result-hours-label'];
-            document.getElementById('result-best-time-label-static').textContent = translations['result-best-time-label'];
-            document.getElementById('result-occupancy-label-static').textContent = translations['result-occupancy-label'];
-            document.getElementById('result-source-label-static').textContent = translations['result-source-label'];
-            document.getElementById('footer-text').textContent = translations['footer-text'];
-
-
-            // Update data-lang-key elements (for radio button labels)
-            document.querySelectorAll('[data-lang-key]').forEach(el => {
-                const key = el.getAttribute('data-lang-key');
-                // Only update labels that are not the main button/footer
-                if (key !== 'button-text-default' && key !== 'loading-text' && key !== 'footer-text' && key !== 'shuffle-button-text') {
-                    el.textContent = translations[key];
-                }
-            });
-
-            // Update button active state
-            langSwitches.forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`lang-${lang}`).classList.add('active');
-        }
-
-        /**
-         * System instruction generator to guide the model's tone and output format,
-         * ensuring the response is in the requested language.
+         * The Golden Nugget: System Prompt from the old code.
          */
         function getSystemPrompt() {
-            const langName = currentLang === 'es' ? 'Spanish (Latin American)' : 'English';
-            
-            // NOTE: Instructing the model to provide a MapQuery field for direct navigation links
+            const langName = currentLang === 'es' ? 'Latin American Spanish' : 'English'; 
+
             return `You are a renowned, "EVERYTHING" expert on Medellín, Colombia. Your goal is to provide a single, detailed, and highly unique "deep cut" date suggestion. Prioritize locations, activities, or venues that are known to locals, off the beaten path, or offer a distinctly authentic and exceptional experience, rather than standard tourist spots or ordinary chain restaurants. The suggestion must still be viable and runnable based on user preferences.
-            Your response MUST strictly adhere to the following key-value format. Do not include any introductory or concluding text outside this format. Do not use markdown (like **bold** or italics). All VALUES MUST be in ${langName}.
-
-            Title: [Name of the Location/Activity]
-            Location: [Neighborhood or specific address/landmark in Medellín]
-            MapQuery: [The exact, highly specific business name and address for map searching, e.g., 'El Cielo Restaurante, Calle 7D #43a-36, El Poblado, Medellín']
-            Description: [A 2-3 sentence description of the atmosphere and why it's a good date spot]
-            Hours: [Typical hours of operation, e.g., 10:00 AM - 10:00 PM]
-            BestTime: [Specific best time/day to visit for a date, e.g., Tuesday evening for fewer crowds]
-            Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low, Medium, High)]
-            `;
+Your response MUST strictly adhere to the following key-value format. Do not include any introductory or concluding text outside this format. Do not use markdown (like **bold** or italics). All VALUES MUST be in ${langName}.
+Title: [Name of the Location/Activity]
+Location: [Neighborhood or specific address/landmark in Medellín]
+MapQuery: [The exact, highly specific business name and address for map searching, e.g., 'El Cielo Restaurante, Calle 7D #43a-36, El Poblado, Medellín']
+Description: [A 2-3 sentence description of the atmosphere and why it's a good date spot]
+Hours: [Typical hours of operation, e.g., 10:00 AM - 10:00 PM]
+BestTime: [Specific best time/day to visit for a date, e.g., Tuesday evening for fewer crowds]
+Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low, Medium, High)]`;
         }
-
+        
         /**
-         * Generates HTML for Google Maps and Apple Maps links.
-         * @param {string} query - The exact location string from the model (MapQuery).
-         * @returns {string} The HTML string for the buttons.
-         */
-        function createMapLinksHtml(query) {
-            const encodedQuery = encodeURIComponent(query);
-            const translations = TRANSLATIONS[currentLang];
-
-            // Google Maps URL format: searches for the query
-            const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
-            // Apple Maps URL format: searches for the query
-            const appleMapsUrl = `https://maps.apple.com/?q=${encodedQuery}`;
-            
-            return `
-                <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="map-link-btn google-maps-btn">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                    ${translations['google-maps-btn']}
-                </a>
-                <a href="${appleMapsUrl}" target="_blank" rel="noopener noreferrer" class="map-link-btn apple-maps-btn">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0zM12 11.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>
-                    ${translations['apple-maps-btn']}
-                </a>
-            `;
-        }
-
-
-        // Utility to implement exponential backoff for retries
-        async function fetchWithBackoff(url, options, maxRetries = 5) {
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (response.status !== 429) { // 429 is "Too Many Requests"
-                        return response;
-                    }
-                    // Handle 429: Wait before retrying
-                    const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000); // 1s, 2s, 4s, 8s, 16s + jitter
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                } catch (error) {
-                    // For network errors, wait and retry
-                    const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    if (i === maxRetries - 1) throw error; // Re-throw if last retry fails
-                }
-            }
-            throw new Error("Max retries exceeded.");
-        }
-
-        /**
-         * Parses the model's text response into a structured object.
+         * Parses the model's text response (key-value format) into a structured object.
          */
         function parseModelResponse(text) {
             const data = {};
-            // Filter out empty lines
             const lines = text.split('\n').filter(line => line.trim() !== '');
 
             lines.forEach(line => {
-                // Split only on the first colon to handle values that contain colons (like addresses)
                 const [key, ...valueParts] = line.split(':');
                 if (key && valueParts.length > 0) {
                     const cleanKey = key.trim();
@@ -463,53 +445,141 @@
         }
 
         /**
+         * Switches all visible text content to the selected language.
+         */
+        function switchLanguage(lang) {
+            currentLang = lang;
+            const translations = TRANSLATIONS[lang];
+
+            // Update all elements based on translations (omitted for brevity but included in the full implementation)
+            document.getElementById('app-title-tag').textContent = translations['app-title'] + (lang === 'en' ? ' - Medellín Dates' : '');
+            document.getElementById('subtitle').textContent = translations['app-subtitle'];
+            document.getElementById('label-date-type').textContent = translations['label-date-type'];
+            document.getElementById('label-time-of-day').textContent = translations['label-time-of-day'];
+            document.getElementById('label-atmosphere').textContent = translations['label-atmosphere'];
+            document.getElementById('label-price').textContent = translations['label-price'];
+            document.getElementById('type-adventurous-text').textContent = translations['type-adventurous'];
+            document.getElementById('type-relaxing-text').textContent = translations['type-relaxing'];
+            document.getElementById('type-cultural-text').textContent = translations['type-cultural'];
+            document.getElementById('type-foodie-text').textContent = translations['type-foodie'];
+            document.getElementById('time-morning-text').textContent = translations['time-morning'];
+            document.getElementById('time-afternoon-text').textContent = translations['time-afternoon'];
+            document.getElementById('time-evening-text').textContent = translations['time-evening'];
+            document.getElementById('atmos-romantic-text').textContent = translations['atmos-romantic'];
+            document.getElementById('atmos-casual-text').textContent = translations['atmos-casual'];
+            document.getElementById('atmos-lively-text').textContent = translations['atmos-lively'];
+            document.getElementById('atmos-chill-text').textContent = translations['atmos-chill'];
+            document.getElementById('price-label-1').textContent = translations['price-label-1'];
+            document.getElementById('price-label-2').textContent = translations['price-label-2'];
+            document.getElementById('price-label-3').textContent = translations['price-label-3'];
+            document.getElementById('price-label-4').textContent = translations['price-label-4'];
+            document.getElementById('button-text').textContent = translations['button-text-default'];
+            document.getElementById('shuffle-button-text').textContent = translations['shuffle-button-text'];
+            document.getElementById('loading-text').textContent = translations['loading-text'];
+            document.getElementById('result-location-label-static').textContent = translations['result-location-label'];
+            document.getElementById('result-vibe-title').textContent = translations['result-vibe-title'];
+            document.getElementById('result-hours-label-static').textContent = translations['result-hours-label'];
+            document.getElementById('result-best-time-label-static').textContent = translations['result-best-time-label'];
+            document.getElementById('result-occupancy-label-static').textContent = translations['result-occupancy-label'];
+            document.getElementById('result-source-label-static').textContent = translations['result-source-label'];
+            document.getElementById('footer-text').textContent = translations['footer-text'];
+            mapLinkText.textContent = translations['map-link-text'];
+            mapTroubleMessage.textContent = translations['map-trouble-message'];
+
+            // Update button active state
+            langSwitches.forEach(btn => {
+                if (btn.getAttribute('data-lang') === lang) {
+                    btn.classList.add('active');
+                    btn.classList.remove('bg-gray-200');
+                } else {
+                    btn.classList.remove('active');
+                    btn.classList.add('bg-gray-200');
+                }
+                btn.textContent = btn.getAttribute('data-lang') === 'en' ? 'English' : 'Español';
+            });
+        }
+
+        // Utility to implement exponential backoff for retries
+        async function fetchWithBackoff(url, options, maxRetries = 5) {
+             for (let i = 0; i < maxRetries; i++) { 
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status !== 429) { 
+                        return response;
+                    } 
+                    const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000); 
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } catch (error) { 
+                    const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    if (i === maxRetries - 1) throw error; 
+                }
+            }
+            throw new Error("Max retries exceeded.");
+        }
+
+
+        /**
+         * Updates the map display logic to use both the embed and the robust link.
+         */
+        function updateMapDisplay(mapQuery) {
+            const isMapQueryValid = mapQuery && mapQuery.trim() !== '';
+
+            if (!isMapQueryValid) {
+                mapIframe.classList.add('hidden');
+                mapLinkContainer.classList.add('hidden');
+                return;
+            }
+
+            // --- 1. Universal Google Maps Search Link (The reliable solution) ---
+            const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+            mapLink.href = searchUrl;
+            mapLinkContainer.classList.remove('hidden');
+            mapTroubleMessage.classList.remove('hidden'); // Show the warning message
+
+            // --- 2. Google Maps Embed URL (Requires specific API authorization) ---
+            // We use the user's provided key here
+            const embedUrl = `https://www.google.com/maps/embed/v1/place?key=${MAPS_API_KEY}&q=${encodeURIComponent(mapQuery)}`;
+            
+            mapIframe.src = embedUrl;
+            mapIframe.classList.remove('hidden');
+            
+            // NOTE: We cannot detect the authorization failure directly in the iframe, 
+            // so we show the link and the warning message as a proactive fallback.
+        }
+
+
+        /**
          * Handles the form submission and initiates the API call.
          */
         async function handleGenerate(event) {
-            if (event) {
-                 event.preventDefault();
-            }
-            
+            if (event) { event.preventDefault(); }
             const translations = TRANSLATIONS[currentLang];
-            
-            // --- CRITICAL CHECK FOR EXTERNAL DEPLOYMENT (MISSING KEY) ---
-            if (API_KEY_PLACEHOLDER === OLD_API_KEY_PLACEHOLDER_STRING) {
-                resultsContainer.classList.remove('hidden');
-                loadingSpinner.classList.add('hidden');
-                document.getElementById('idea-content').classList.remove('hidden');
-                ideaTitle.textContent = translations['error-api-title'];
-                descriptionText.innerHTML = currentLang === 'es' 
-                    ? '¡La clave API aún está con el valor predeterminado! Reemplace "YOUR_GEMINI_API_KEY_HERE" en el código con su clave.' 
-                    : 'The API Key is still the placeholder value! Please replace "YOUR_GEMINI_API_KEY_HERE" in the code with your key.';
-                locationText.textContent = hoursText.textContent = bestTimeText.textContent = occupancyText.textContent = '—';
-                mapLinksContainer.innerHTML = '';
-                citationBox.classList.add('hidden');
-                return; 
-            }
-            
-            // 1. Collect Form Data
-            const vibe = document.querySelector('input[name="vibe"]:checked').value;
-            const budget = document.querySelector('input[name="budget"]:checked').value;
-            const time = document.querySelector('input[name="time"]:checked').value;
 
-            // Instruct the model to respond in the selected language
-            const userQuery = `Suggest ONE date idea in Medellín, Colombia. The vibe should be ${vibe}, the budget is ${budget}, and the time of day is ${time}. Provide location, hours, best time to go, and crowd occupancy estimate. Respond fully in ${currentLang === 'es' ? 'Latin American Spanish' : 'English'}.`;
+            // --- 1. Get User Preferences ---
+            const type = form.elements['date-type'].value;
+            const timeOfDay = form.elements['time-of-day'].value;
+            const atmosphere = form.elements.atmosphere.value;
+            const price = form.elements.price.value;
 
-            // 2. UI State: Loading
-            resultsContainer.classList.remove('hidden');
-            loadingSpinner.classList.remove('hidden');
-            document.getElementById('idea-content').classList.add('hidden');
+            // --- Construct Query for the "Golden Nugget" Prompt ---
+            const userQuery = `Generate a unique date idea for Medellín with the following criteria: Type: ${type}, Time of Day: ${timeOfDay}, Atmosphere: ${atmosphere}, Price: ${price}. Provide location, hours, best time to go, and crowd occupancy estimate. Respond fully in ${currentLang === 'es' ? 'Latin American Spanish' : 'English'}.`;
+
+            // --- 2. UI State: Loading ---
+            resultsContainer.classList.add('hidden'); // Hide old results
+            mapIframe.classList.add('hidden'); // Hide old map
+            mapLinkContainer.classList.add('hidden'); // Hide old link
+            loadingIndicator.classList.remove('hidden'); 
             
-            // Disable all interactive elements
             generateButton.disabled = true;
             shuffleButton.disabled = true;
-            shuffleButton.classList.add('hidden'); // Hide shuffle button during generation
+            shuffleButton.classList.add('hidden'); 
             
             // Update button text and icon
             buttonText.textContent = translations['button-text-loading'];
             buttonIcon.classList.add('animate-spin');
 
-            // 3. Construct API Payload
+            // --- 3. Construct API Payload (Gemini) ---
             const systemPrompt = getSystemPrompt();
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
@@ -530,97 +600,80 @@
                 if (!response.ok) {
                     throw new Error(`API request failed with status ${response.status}`);
                 }
-
                 const result = await response.json();
                 const candidate = result.candidates?.[0];
-                
-                // Check if the content was blocked by safety filters
+
                 if (result.promptFeedback && result.promptFeedback.blockReason) {
-                    throw new Error(`Content Blocked: ${result.promptFeedback.blockReason}. Try different input terms.`);
+                    throw new Error(`Content Blocked: ${result.promptFeedback.blockReason}`);
                 }
+                
+                const groundingMetadata = candidate.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                    citationSources = groundingMetadata.groundingAttributions
+                        .map(attribution => ({
+                            uri: attribution.web?.uri,
+                            title: attribution.web?.title,
+                        }))
+                        .filter(source => source.uri && source.title); 
+                }
+                
+                const rawText = candidate.content.parts[0].text;
+                responseData = parseModelResponse(rawText);
 
-                if (candidate && candidate.content?.parts?.[0]?.text) {
-                    const modelText = candidate.content.parts[0].text;
-                    responseData = parseModelResponse(modelText);
-
-                    // Must have Title and MapQuery to be considered a successful, useful response
-                    if (!responseData.Title || !responseData.MapQuery) {
-                         throw new Error(`Incomplete response from AI. Missing Title or MapQuery fields.`);
-                    }
-
-                    // Extract grounding sources
-                    const groundingMetadata = candidate.groundingMetadata;
-                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
-                        citationSources = groundingMetadata.groundingAttributions
-                            .map(attribution => ({
-                                uri: attribution.web?.uri,
-                                title: attribution.web?.title,
-                            }))
-                            .filter(source => source.uri && source.title);
-                    }
-                } else {
-                    // Catch-all for truly invalid/empty response structure
-                    throw new Error('Invalid or empty response content from API.');
+                if (!responseData.Title || !responseData.Location) {
+                     throw new Error(`Model returned unexpected format. Text starts with: ${rawText.substring(0, 50)}...`);
                 }
 
             } catch (error) {
-                console.error('Gemini API Error:', error);
+                console.error("API Error:", error);
                 
-                const errorMessage = error.message || (currentLang === 'en' ? 'An unexpected API error occurred.' : 'Ocurrió un error inesperado en la API.');
-                
-                // Handle user-facing error message
+                const errorMessage = (error.message.includes('400') || error.message.includes('403') || error.message.includes('401')) 
+                    ? translations['error-key-desc'] 
+                    : translations['error-generic-desc'];
+
                 ideaTitle.textContent = translations['error-api-title'];
-                descriptionText.innerHTML = `${errorMessage} <br><br> <span class="text-sm">${translations['error-generic-desc']}</span>`;
-
-                locationText.textContent = hoursText.textContent = bestTimeText.textContent = occupancyText.textContent = '—';
-                mapLinksContainer.innerHTML = '';
+                locationText.textContent = errorMessage;
+                descriptionText.textContent = '';
+                hoursText.textContent = '';
+                bestTimeText.textContent = '';
+                occupancyText.textContent = '';
                 citationBox.classList.add('hidden');
-                document.getElementById('idea-content').classList.remove('hidden');
-                return; 
-
-            } finally {
-                // 4. UI State: Done
-                loadingSpinner.classList.add('hidden');
                 
-                // Re-enable elements
+            } finally {
+                // --- 4. UI State: Completed ---
+                loadingIndicator.classList.add('hidden');
                 generateButton.disabled = false;
                 shuffleButton.disabled = false;
-                shuffleButton.classList.remove('hidden'); // Show shuffle button
-                
-                // Reset button text and icon
+                shuffleButton.classList.remove('hidden'); 
                 buttonText.textContent = translations['button-text-default'];
                 buttonIcon.classList.remove('animate-spin');
             }
 
-            // 5. Populate Results (Only runs on successful try block)
-            ideaTitle.textContent = responseData.Title || 'N/A';
-            locationText.textContent = responseData.Location || 'N/A';
-            descriptionText.textContent = responseData.Description || 'N/A';
-            hoursText.textContent = responseData.Hours || 'N/A';
-            bestTimeText.textContent = responseData.BestTime || 'N/A';
-            occupancyText.textContent = responseData.Occupancy || 'N/A';
-            
-            // Add Map Links
-            if (responseData.MapQuery) {
-                mapLinksContainer.innerHTML = createMapLinksHtml(responseData.MapQuery);
-                document.getElementById('map-links-container').classList.remove('hidden');
-            } else {
-                mapLinksContainer.innerHTML = '';
-                document.getElementById('map-links-container').classList.add('hidden');
-            }
+            // --- 5. Populate Results (Only runs on successful try block) ---
+            if (responseData) {
+                ideaTitle.textContent = responseData.Title || 'N/A';
+                locationText.textContent = responseData.Location || 'N/A';
+                descriptionText.textContent = responseData.Description || 'N/A';
+                hoursText.textContent = responseData.Hours || 'N/A';
+                bestTimeText.textContent = responseData.BestTime || 'N/A';
+                occupancyText.textContent = responseData.Occupancy || 'N/A';
 
-            // Add Citation
-            if (citationSources.length > 0) {
-                const source = citationSources[0]; // Display the first source
-                citationLink.href = source.uri;
-                citationLink.textContent = source.title;
-                citationBox.classList.remove('hidden');
-            } else {
-                citationBox.classList.add('hidden');
-            }
-            
-            document.getElementById('idea-content').classList.remove('hidden');
+                // Handle Map Display (Embed + Fallback Link)
+                updateMapDisplay(responseData.MapQuery);
 
+                // Handle citation display
+                if (citationSources.length > 0) {
+                    const source = citationSources[0];
+                    citationLink.href = source.uri;
+                    citationLink.textContent = source.title || source.uri;
+                    citationBox.classList.remove('hidden');
+                } else {
+                    citationBox.classList.add('hidden');
+                }
+                
+                // Show the results
+                resultsContainer.classList.remove('hidden');
+            }
         }
 
         // --- Event Listeners and Initialization ---
@@ -642,9 +695,8 @@
             // Form submission handler
             form.addEventListener('submit', handleGenerate);
             
-            // NEW: Shuffle button handler. This re-submits the form using the current selected values.
+            // Shuffle button handler. This re-submits the form using the current selected values.
             shuffleButton.addEventListener('click', () => {
-                // Call handleGenerate without an event object to skip event.preventDefault() and directly process the existing form values
                 handleGenerate(null); 
             });
         });
