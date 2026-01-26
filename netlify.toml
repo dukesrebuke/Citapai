@@ -1,14 +1,25 @@
 [build]
+  publish = "."
   functions = "netlify/functions"
 
-# Ensure functions work first
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# Then catch-all for SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+```
+
+
+- `publish = "."` tells Netlify that your site files are in the root directory
+- The redirect rule ensures your SPA routing works properly
+- Functions are already correctly configured
+
+## Deploy Steps:
+
+
+
+citapai/
+├── index.html
+├── netlify.toml
+└── netlify/
+    └── functions/
+        └── generate.js
