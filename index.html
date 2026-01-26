@@ -334,7 +334,6 @@
         const mapLinkContainer = document.getElementById('map-link-container'); 
         const mapLink = document.getElementById('map-link');                   
         const mapLinkText = document.getElementById('map-link-text');         
-        const mapTroubleMessage = document.getElementById('map-trouble-message'); 
 
         // Language elements
         const langSwitches = document.querySelectorAll('.lang-switch');
@@ -497,7 +496,6 @@ Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low,
             document.getElementById('result-source-label-static').textContent = translations['result-source-label'];
             document.getElementById('footer-text').textContent = translations['footer-text'];
             mapLinkText.textContent = translations['map-link-text'];
-            mapTroubleMessage.textContent = translations['map-trouble-message'];
 
             // Update button active state
             langSwitches.forEach(btn => {
@@ -535,14 +533,21 @@ Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low,
         /**
          * Updates the map display logic to use both the embed and the robust link.
          */
-        function updateMapDisplay(mapQuery) {
-            const isMapQueryValid = mapQuery && mapQuery.trim() !== '';
+       function updateMapDisplay(mapQuery) {
+    const isValid = mapQuery && mapQuery.trim() !== '';
 
-            if (!isMapQueryValid) {
-                mapIframe.classList.add('hidden');
-                mapLinkContainer.classList.add('hidden');
-                return;
-            }
+    if (!isValid) {
+        mapLinkContainer.classList.add('hidden');
+        return;
+    }
+
+    const searchUrl =
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+
+    mapLink.href = searchUrl;
+    mapLinkContainer.classList.remove('hidden');
+}
+
 
             // --- 1. Universal Google Maps Search Link (The reliable solution) ---
             const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
