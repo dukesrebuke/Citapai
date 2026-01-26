@@ -1,4 +1,4 @@
-// Updated: Jan 26, 2026 v4 - Using Gemini 2.0 Flash (newest stable model)
+// Using OpenAI GPT-4o-mini - stable and reliable
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
@@ -14,28 +14,34 @@ exports.handler = async (event) => {
         body: "Missing prompt data"
       };
     }
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return {
         statusCode: 500,
-        body: "Gemini API key not configured"
+        body: "OpenAI API key not configured"
       };
     }
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=" + apiKey,
+      "https://api.openai.com/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
         body: JSON.stringify({
-          contents: [
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
             {
               role: "user",
-              parts: [{ text: userQuery }]
+              content: userQuery
             }
           ],
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          }
+          temperature: 0.7
         })
       }
     );
@@ -47,12 +53,28 @@ exports.handler = async (event) => {
       };
     }
     const data = await response.json();
+    
+    // Convert OpenAI format to match your existing frontend
+    const formattedResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: data.choices[0].message.content
+              }
+            ]
+          }
+        }
+      ]
+    };
+    
     return {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(formattedResponse)
     };
   } catch (err) {
     return {
