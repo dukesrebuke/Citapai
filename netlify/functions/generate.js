@@ -1,3 +1,4 @@
+// Updated: Jan 26, 2026 - Fixed export syntax for Netlify Functions
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
