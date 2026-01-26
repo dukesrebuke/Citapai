@@ -1,4 +1,4 @@
-// Updated: Jan 26, 2026 v2 - Fixed Gemini API model endpoint
+// Updated: Jan 26, 2026 v3 - Using v1beta with correct model
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
@@ -22,7 +22,7 @@ exports.handler = async (event) => {
       };
     }
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + apiKey,
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + apiKey,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,7 +33,7 @@ exports.handler = async (event) => {
               parts: [{ text: userQuery }]
             }
           ],
-          system_instruction: {
+          systemInstruction: {
             parts: [{ text: systemPrompt }]
           }
         })
