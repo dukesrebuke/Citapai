@@ -622,20 +622,21 @@ Occupancy:`;
             let citationSources = [];
 
             try {
-               const response = await fetchWithBackoff(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        contents: [
-            {
-                role: "user",
-                parts: [
-                    { text: userQuery }
-                ]
-            }
+              const response = await fetchWithBackoff(API_URL, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: userQuery }
         ]
-    })
+      }
+    ]
+  })
 });
+
 
                 if (!response.ok) {
                     throw new Error(`API request failed with status ${response.status}`);
