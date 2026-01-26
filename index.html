@@ -300,10 +300,10 @@
         const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
         
         // --- IMPORTANT: PASTE YOUR AUTHORIZED GOOGLE MAPS EMBED API KEY HERE ---
-        const MAPS_API_KEY = "AIzaSyCzDF_B6hsSQyrvrgJrfZ7vAnGSWiQXE-4"; 
+        const MAPS_API_KEY = "XXXXXX-4"; 
         
         // Logic for Gemini API Key handling in Canvas environment
-        const API_KEY_PLACEHOLDER = "AIzaSyAqJxMU5XC6MeDrcUx4YDqXZZxtvwnkCTk"; // Placeholder for external use
+        const API_KEY_PLACEHOLDER = "XXXXXXXX"; // Placeholder for external use
         const API_KEY = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token.length > 0) 
             ? "" // Use empty string if in Canvas environment, letting it inject the key via fetch.
             : API_KEY_PLACEHOLDER;
