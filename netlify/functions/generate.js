@@ -33,7 +33,7 @@ exports.handler = async (event) => {
               parts: [{ text: userQuery }]
             }
           ],
-          systemInstruction: {
+          system_instruction: {
             parts: [{ text: systemPrompt }]
           }
         })
