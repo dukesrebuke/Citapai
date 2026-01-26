@@ -1,4 +1,4 @@
-// Updated: Jan 26, 2026 v3 - Using v1beta with correct model
+// Updated: Jan 26, 2026 v4 - Using Gemini 2.0 Flash (newest stable model)
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
@@ -22,7 +22,7 @@ exports.handler = async (event) => {
       };
     }
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + apiKey,
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=" + apiKey,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
