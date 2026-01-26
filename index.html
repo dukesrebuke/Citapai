@@ -296,7 +296,7 @@
 
     <script>
         // --- API Configuration ---
-        const API_MODEL = "gemini-1.5-flash";
+        const API_MODEL = "models/gemini-1.5-flash-latest";
         
         // --- IMPORTANT: PASTE YOUR AUTHORIZED GOOGLE MAPS EMBED API KEY HERE ---
         const MAPS_API_KEY = "AIzaSyCzDF_B6hsSQyrvrgJrfZ7vAnGSWiQXE-4"; 
@@ -307,7 +307,7 @@
             ? "" // Use empty string if in Canvas environment, letting it inject the key via fetch.
             : API_KEY_PLACEHOLDER;
         
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent${API_KEY ? `?key=${API_KEY}` : ''}`;
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/${API_MODEL}:generateContent?key=${API_KEY}`;
         
         // --- Global State and Constants ---
         let currentLang = 'en';
