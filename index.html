@@ -547,24 +547,21 @@ Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low,
     mapLink.href = searchUrl;
     mapLinkContainer.classList.remove('hidden');
 }
+        function updateMapDisplay(mapQuery) {
+    const isValid = mapQuery && mapQuery.trim() !== '';
 
+    if (!isValid) {
+        mapLinkContainer.classList.add('hidden');
+        return;
+    }
 
-            // --- 1. Universal Google Maps Search Link (The reliable solution) ---
-            const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
-            mapLink.href = searchUrl;
-            mapLinkContainer.classList.remove('hidden');
-            mapTroubleMessage.classList.remove('hidden'); // Show the warning message
+    const searchUrl =
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
 
-            // --- 2. Google Maps Embed URL (Requires specific API authorization) ---
-            // We use the user's provided key here
-            const embedUrl = `https://www.google.com/maps/embed/v1/place?key=${MAPS_API_KEY}&q=${encodeURIComponent(mapQuery)}`;
-            
-            mapIframe.src = embedUrl;
-            mapIframe.classList.remove('hidden');
-            
-            // NOTE: We cannot detect the authorization failure directly in the iframe, 
-            // so we show the link and the warning message as a proactive fallback.
-        }
+    mapLink.href = searchUrl;
+    mapLinkContainer.classList.remove('hidden');
+}
+
 
 
         /**
@@ -585,7 +582,6 @@ Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low,
 
             // --- 2. UI State: Loading ---
             resultsContainer.classList.add('hidden'); // Hide old results
-            mapIframe.classList.add('hidden'); // Hide old map
             mapLinkContainer.classList.add('hidden'); // Hide old link
             loadingIndicator.classList.remove('hidden'); 
             
