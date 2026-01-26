@@ -307,7 +307,6 @@
             ? "" // Use empty string if in Canvas environment, letting it inject the key via fetch.
             : API_KEY_PLACEHOLDER;
         
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/${API_MODEL}:generateContent?key=${API_KEY}`;
         
         // --- Global State and Constants ---
         let currentLang = 'en';
@@ -622,20 +621,15 @@ Occupancy:`;
             let citationSources = [];
 
             try {
-              const response = await fetchWithBackoff(API_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+              const response = await fetch("/.netlify/functions/generate", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { text: userQuery }
-        ]
-      }
-    ]
+    userQuery,
+    systemPrompt
   })
 });
+
 
 
                 if (!response.ok) {
