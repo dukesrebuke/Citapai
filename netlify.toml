@@ -1,3 +1,8 @@
-
 [build]
   functions = "netlify/functions"
+  publish = "."  # or your build output directory (e.g., "dist", "build")
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
