@@ -1,7 +1,13 @@
 [build]
   functions = "netlify/functions"
-  publish = "."  # or your build output directory (e.g., "dist", "build")
 
+# Ensure functions work first
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Then catch-all for SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
