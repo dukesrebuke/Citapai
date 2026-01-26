@@ -1,37 +1,70 @@
-export default async function handler(event) {
+export async function handler(event) {
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      body: "Method Not Allowed"
+    };
+  }
+
   try {
-    const { prompt } = JSON.parse(event.body);
+    const { userQuery, systemPrompt } = JSON.parse(event.body);
+
+    if (!userQuery || !systemPrompt) {
+      return {
+        statusCode: 400,
+        body: "Missing prompt data"
+      };
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        body: "Gemini API key not configured"
+      };
+    }
 
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
             {
               role: "user",
-              parts: [{ text: prompt }],
-            },
+              parts: [{ text: userQuery }]
+            }
           ],
-        }),
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          }
+        })
       }
     );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        statusCode: response.status,
+        body: errorText
+      };
+    }
 
     const data = await response.json();
 
     return {
       statusCode: 200,
-      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
     };
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      body: err.message
     };
   }
 }
-
