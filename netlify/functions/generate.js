@@ -22,7 +22,7 @@ exports.handler = async (event) => {
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-       model: "llama-3.3-70b-specdec",
+      model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "system",
