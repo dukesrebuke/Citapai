@@ -33,7 +33,7 @@ exports.handler = async (event) => {
             content: userQuery
           }
         ],
-        temperature: 0.1,
+        temperature: 1.1,
         max_tokens: 1024
       })
     });
