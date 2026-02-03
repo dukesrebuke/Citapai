@@ -430,23 +430,37 @@ CRITICAL: Each response must be DIFFERENT and CREATIVE. Avoid repeating the same
 
 Prioritize locations, activities, or venues that are known to locals, off the beaten path, or offer a distinctly authentic and exceptional experience, rather than standard tourist spots or ordinary chain restaurants. The suggestion must still be viable and runnable based on user preferences.
 
+CRITICAL: You MUST provide ALL 7 fields below. Every single field is REQUIRED. Do not skip any field.
+
 Your response MUST strictly adhere to the following key-value format. Do not include any introductory or concluding text outside this format. Do not use markdown (like **bold** or italics). All VALUES MUST be in ${langName}.
+
+REQUIRED FORMAT (ALL 7 FIELDS MANDATORY):
 
 Title: [Name of the Location/Activity]
 Location: [Neighborhood or specific address/landmark in Medellín]
 MapQuery: [The exact, highly specific business name and address for map searching, e.g., 'El Cielo Restaurante, Calle 7D #43a-36, El Poblado, Medellín']
 Description: [A 2-3 sentence description of the atmosphere and why it's a good date spot]
-Hours: [Typical hours of operation, e.g., 10:00 AM - 10:00 PM]
-BestTime: [Specific best time/day to visit for a date, e.g., Tuesday evening for fewer crowds]
-Occupancy: [Estimate of typical crowd level during the selected time (e.g., Low, Medium, High)]
+Hours: [Typical hours of operation, e.g., 10:00 AM - 10:00 PM or Mon-Fri 9AM-6PM, Sat-Sun 10AM-8PM]
+BestTime: [Specific best time/day to visit for a date, e.g., Tuesday evening for fewer crowds or Weekend mornings]
+Occupancy: [Estimate of typical crowd level during the selected time: Low, Medium, or High]
+
+EXAMPLE OUTPUT:
+Title: Jardín Botánico Secret Sunset
+Location: Jardín Botánico, Aranjuez
+MapQuery: Jardín Botánico de Medellín, Calle 73 #51d-14, Aranjuez, Medellín
+Description: A peaceful oasis in the city with stunning orchid collections and tranquil pathways. Perfect for couples seeking a romantic, nature-filled escape without leaving the urban area.
+Hours: Tuesday-Sunday 9:00 AM - 4:30 PM
+BestTime: Weekday afternoons around 3 PM for golden hour light
+Occupancy: Low
 
 CRITICAL OUTPUT RULES:
 - Output PLAIN TEXT ONLY
 - DO NOT use HTML
 - DO NOT use markdown
 - DO NOT use headings, lists, or paragraphs
+- ALL 7 fields MUST be present
 - Each field MUST be on its own line
-- Use EXACTLY this format (case-sensitive):
+- Use EXACTLY this format (field names are case-sensitive):
 Title:
 Location:
 MapQuery:
@@ -649,6 +663,9 @@ title: attribution.web?.title,
 }
 
 const rawText = candidate.content.parts[0].text;
+console.log("=== RAW API RESPONSE ===");
+console.log(rawText);
+console.log("=== END RAW RESPONSE ===");
 responseData = parseModelResponse(rawText);
 
 if (!responseData.Title || !responseData.Location) {
