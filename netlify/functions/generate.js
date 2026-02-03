@@ -15,9 +15,6 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: "Gemini API key not configured" };
     }
     
-    // Combine system and user prompts for Gemini
-    const combinedPrompt = `${systemPrompt}\n\n${userQuery}`;
-    
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
@@ -28,12 +25,20 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: combinedPrompt
+              text: userQuery
             }]
+          }],
+          systemInstruction: {
+            parts: [{
+              text: systemPrompt
+            }]
+          },
+          tools: [{
+            googleSearch: {}
           }],
           generationConfig: {
             temperature: 1.1,
-            maxOutputTokens: 1024
+            maxOutputTokens: 8192  // Increased from 1024 - this was cutting off your response!
           }
         })
       }
