@@ -1,4 +1,4 @@
-// Using Groq with Llama 3.1 - FREE, fast, reliable
+// Using Gemini 2.5 Flash - FREE and powerful
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
@@ -10,59 +10,56 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: "Missing prompt data" };
     }
     
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return { statusCode: 500, body: "Groq API key not configured" };
+      return { statusCode: 500, body: "Gemini API key not configured" };
     }
     
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: userQuery
+    // Combine system and user prompts for Gemini
+    const combinedPrompt = `${systemPrompt}\n\n${userQuery}`;
+    
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: combinedPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 1.1,
+            maxOutputTokens: 1024
           }
-        ],
-        temperature: 1.1,
-        max_tokens: 1024
-      })
-    });
+        })
+      }
+    );
     
     if (!response.ok) {
       const errorText = await response.text();
-      return { statusCode: response.status, body: errorText };
+      return { 
+        statusCode: response.status, 
+        body: JSON.stringify({ error: "Gemini API failed", details: errorText })
+      };
     }
     
     const data = await response.json();
     
-    // Convert Groq/OpenAI format to match your frontend expectations
-    const formattedResponse = {
-      candidates: [{
-        content: {
-          parts: [{
-            text: data.choices[0].message.content
-          }]
-        }
-      }]
-    };
-    
+    // Gemini already returns in the format your frontend expects!
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formattedResponse)
+      body: JSON.stringify(data)
     };
     
   } catch (err) {
-    return { statusCode: 500, body: err.message };
+    return { 
+      statusCode: 500, 
+      body: JSON.stringify({ error: err.message })
+    };
   }
 };
