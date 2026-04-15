@@ -1,758 +1,674 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="app-title-tag">Citapai</title>
-<!-- Load Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-theme: {
-extend: {
-colors: {
-'primary': '#009688', // Teal/Paisa-friendly color
-'secondary': '#80CBC4',
-'background': '#F4F4F9',
-'card': '#FFFFFF',
-'text-dark': '#212121',
-'text-light': '#424242',
-},
-fontFamily: {
-sans: ['Inter', 'sans-serif'],
-}
-}
-}
-}
-</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Citapai — Citas en Medellín, curadas por IA</title>
+<meta name="description" content="Noches de cita en Medellín, curadas por inteligencia artificial. Dinos el ambiente, nosotros encontramos el lugar." />
+<meta property="og:title" content="Citapai" />
+<meta property="og:description" content="Citas en Medellín, curadas por IA." />
+<meta property="og:url" content="https://citapai.netlify.app" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Custom styles for subtle aesthetic touches */
-.card-glow {
-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06), 0 0 10px rgba(0, 150, 136, 0.15);
-transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+:root {
+  /* La Ciudad Primavera Eterna */
+  --forest:     #0d2218;       /* deep jungle dark */
+  --canopy:     #12301f;       /* rich forest bg */
+  --leaf:       #1a3a2a;       /* botanical card bg */
+  --leaf-lift:  #1f4530;       /* hover surface */
+  --leaf-rule:  rgba(144,200,144,0.12);
 
-/* Custom radio button styling */
-.custom-radio-label {
-transition: all 0.3s ease;
-cursor: pointer;
-border: 2px solid #E0E0E0;
-color: var(--text-dark);
-}
-.custom-radio-input:checked + .custom-radio-label {
-border-color: #009688;
-background-color: #E0F2F1; /* Light teal background */
-box-shadow: 0 0 5px rgba(0, 150, 136, 0.5);
-font-weight: 600;
-}
-.custom-radio-input {
-position: absolute;
-opacity: 0;
-width: 0;
-height: 0;
+  --bloom:      #9b4f8e;       /* orchid — primary accent */
+  --bloom-hot:  #b45fa6;       /* orchid hover */
+  --bloom-glow: rgba(155,79,142,0.22);
+  --bloom-dim:  rgba(155,79,142,0.08);
+
+  --gold:       #e8a020;       /* Medellín sunlight */
+  --terra:      #c96a3a;       /* terracotta warmth */
+
+  --text:       #e8f0e2;       /* soft botanical white */
+  --text-dim:   rgba(232,240,226,0.52);
+  --text-faint: rgba(232,240,226,0.24);
+  --white:      #f5f8f2;
 }
 
-/* Loading Spinner */
-.spinner {
-border: 4px solid rgba(0, 0, 0, 0.1);
-border-left-color: #009688;
-border-radius: 50%;
-width: 24px;
-height: 24px;
-animation: spin 1s linear infinite;
-}
-@keyframes spin {
-to { transform: rotate(360deg); }
+html, body {
+  height: 100%;
+  background: var(--forest);
+  color: var(--text);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  overflow-x: hidden;
 }
 
-/* Language Toggle Active State */
-.lang-switch.active {
-background-color: #009688;
-color: #FFFFFF;
-box-shadow: 0 2px 5px rgba(0, 150, 136, 0.4);
-}
-.lang-switch:not(.active) {
-background-color: transparent;
-color: #212121;
-}
-
-/* Map specific styles */
-#map-iframe {
-border-radius: 8px;
-width: 100%;
-height: 250px;
-border: 1px solid #ccc;
-margin-top: 10px;
+/* Botanical grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 9000;
 }
 
-/* Logo specific styling */
-.logo-img {
-width: 72px; /* Slightly larger for image */
-height: 72px;
-object-fit: contain;
+/* ── Topbar ── */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 48px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.4s, background 0.4s, backdrop-filter 0.4s;
+}
+.topbar.scrolled {
+  background: rgba(13,34,24,0.9);
+  backdrop-filter: blur(16px);
+  border-color: var(--leaf-rule);
+}
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.16em;
+  color: var(--white);
+}
+.logo-dot { color: var(--bloom); }
+.topbar-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border: 1px solid var(--leaf-rule);
+  padding: 5px 12px;
+  border-radius: 2px;
+}
+
+/* ── Hero ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 140px 48px 100px;
+  position: relative;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Ghost lettering */
+.hero-bg-type {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -52%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(14rem, 32vw, 38rem);
+  line-height: 1;
+  color: rgba(144,200,100,0.03);
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+
+/* Botanical leaf decorations */
+.hero-leaf {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.06;
+  user-select: none;
+  font-size: 12rem;
+}
+.hero-leaf-l { top: 8%; left: -3%; transform: rotate(-20deg); }
+.hero-leaf-r { bottom: 12%; right: -2%; transform: rotate(15deg); }
+
+.hero-rule {
+  width: 48px;
+  height: 3px;
+  background: var(--bloom);
+  margin: 0 auto 32px;
+  opacity: 0;
+  animation: rise 0.6s ease forwards 0.2s;
+}
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--bloom);
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: rise 0.7s ease forwards 0.35s;
+}
+.headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4.5rem, 12vw, 11rem);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: var(--white);
+  opacity: 0;
+  animation: rise 0.9s ease forwards 0.5s;
+}
+.headline-sub {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4.5rem, 12vw, 11rem);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(232,240,226,0.28);
+  display: block;
+  opacity: 0;
+  animation: rise 0.9s ease forwards 0.62s;
+}
+.headline-city {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4.5rem, 12vw, 11rem);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: var(--bloom);
+  display: block;
+  opacity: 0;
+  animation: rise 0.9s ease forwards 0.74s;
+}
+.sub {
+  margin-top: 40px;
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text-dim);
+  max-width: 460px;
+  line-height: 1.6;
+  opacity: 0;
+  animation: rise 0.9s ease forwards 1s;
+}
+.cta-wrap {
+  margin-top: 56px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  opacity: 0;
+  animation: rise 0.9s ease forwards 1.2s;
+}
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 17px 38px;
+  background: var(--bloom);
+  color: #fff;
+  text-decoration: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.cta-btn:hover {
+  background: var(--bloom-hot);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px var(--bloom-glow);
+}
+.cta-btn:active { transform: translateY(0); }
+.cta-arrow { width: 14px; height: 14px; transition: transform 0.2s; }
+.cta-btn:hover .cta-arrow { transform: translateX(3px); }
+.cta-secondary {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ── Ticker ── */
+.ticker-wrap {
+  width: 100%;
+  overflow: hidden;
+  border-top: 1px solid var(--leaf-rule);
+  border-bottom: 1px solid var(--leaf-rule);
+  padding: 14px 0;
+  background: var(--canopy);
+}
+.ticker-track {
+  display: flex;
+  animation: ticker 32s linear infinite;
+  white-space: nowrap;
+}
+.ticker-item {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 0 32px;
+  flex-shrink: 0;
+}
+.ticker-item span { color: var(--bloom); margin-right: 8px; }
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── Stats ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--leaf-rule);
+}
+.stat {
+  padding: 52px 40px;
+  border-right: 1px solid var(--leaf-rule);
+  text-align: center;
+}
+.stat:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3.5rem, 6vw, 5rem);
+  line-height: 1;
+  color: var(--white);
+  letter-spacing: 0.02em;
+}
+.stat-num em { color: var(--bloom); font-style: normal; }
+.stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-top: 10px;
+}
+
+/* ── Features ── */
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--leaf-rule);
+}
+.feature {
+  padding: 64px 48px;
+  border-right: 1px solid var(--leaf-rule);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.feature:last-child { border-right: none; }
+.feature-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bloom);
+}
+.feature-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.9rem;
+  letter-spacing: 0.06em;
+  color: var(--white);
+  line-height: 1.05;
+}
+.feature-body {
+  font-size: 1rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text-dim);
+  line-height: 1.65;
+}
+
+/* ── Pull quote ── */
+.pull-quote {
+  padding: 96px 48px;
+  text-align: center;
+  border-bottom: 1px solid var(--leaf-rule);
+  position: relative;
+  overflow: hidden;
+  background: var(--canopy);
+}
+.pull-quote::before {
+  content: '\201C';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28rem;
+  line-height: 1;
+  color: rgba(155,79,142,0.04);
+  pointer-events: none;
+  user-select: none;
+}
+.pull-quote blockquote {
+  font-size: clamp(1.7rem, 3.2vw, 2.5rem);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-width: 720px;
+  margin: 0 auto;
+  position: relative;
+}
+.pull-quote blockquote em { color: var(--white); font-style: normal; }
+
+/* ── How it works ── */
+.how {
+  padding: 96px 0 0;
+  border-bottom: 1px solid var(--leaf-rule);
+}
+.how-header {
+  padding: 0 48px 56px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.how-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--bloom);
+}
+.how-rule { flex: 1; height: 1px; background: var(--leaf-rule); }
+.step {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  border-top: 1px solid var(--leaf-rule);
+  transition: background 0.2s;
+}
+.step:hover { background: var(--leaf); }
+.step-num {
+  padding: 38px 0 36px 48px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  line-height: 1;
+}
+.step-content {
+  padding: 36px 48px;
+  border-left: 1px solid var(--leaf-rule);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: center;
+}
+.step-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.06em;
+  color: var(--white);
+  line-height: 1;
+}
+.step-body {
+  font-size: 0.95rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text-dim);
+  line-height: 1.65;
+}
+
+/* ── Final CTA ── */
+.final-cta {
+  padding: 120px 48px 100px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.final-cta-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(155,79,142,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+.final-overline {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 28px;
+}
+.final-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3rem, 7.5vw, 7.5rem);
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+  color: var(--white);
+  margin-bottom: 20px;
+}
+.final-headline em { color: var(--bloom); font-style: normal; display: block; }
+.final-sub {
+  font-size: 1.2rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text-dim);
+  margin: 0 auto 56px;
+  max-width: 400px;
+  line-height: 1.55;
+}
+
+/* ── Footer ── */
+.footer {
+  border-top: 1px solid var(--leaf-rule);
+  padding: 28px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--canopy);
+}
+.footer-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}
+.footer-logo span { color: var(--bloom); }
+.footer-note {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .topbar { padding: 18px 24px; }
+  .topbar-tag { display: none; }
+  .hero { padding: 110px 24px 80px; }
+  .headline, .headline-sub, .headline-city { font-size: clamp(4rem, 18vw, 7rem); }
+  .cta-wrap { flex-direction: column; gap: 16px; align-items: center; }
+  .stats { grid-template-columns: 1fr; }
+  .stat { border-right: none; border-bottom: 1px solid var(--leaf-rule); padding: 40px 24px; }
+  .features { grid-template-columns: 1fr; }
+  .feature { border-right: none; border-bottom: 1px solid var(--leaf-rule); padding: 48px 24px; }
+  .how-header { padding: 0 24px 40px; }
+  .step { grid-template-columns: 52px 1fr; }
+  .step-num { padding-left: 24px; }
+  .step-content { padding: 28px 24px; grid-template-columns: 1fr; gap: 10px; }
+  .pull-quote { padding: 72px 24px; }
+  .final-cta { padding: 88px 24px 72px; }
+  .footer { flex-direction: column; gap: 12px; text-align: center; padding: 24px; }
 }
 </style>
 </head>
-<body class="bg-background min-h-screen p-4 sm:p-8 flex justify-center items-start font-sans">
 
-<div class="w-full max-w-xl">
+<body>
+<div>
 
-<!-- Header: Centered Logo and Language Switcher (Using Image Tag) -->
-<header class="text-center mb-8">
-<!-- 1. Centered Image Logo (Replaces Old Header Text) -->
-<div class="flex flex-col items-center justify-center mb-4">
-<div class="logo-container mb-2">
-<!--
+  <nav class="topbar" id="topbar">
+    <div class="logo">Citapai<span class="logo-dot">.</span></div>
+    <div class="topbar-tag">Medellín &middot; Colombia</div>
+  </nav>
 
-FULL BASE64 DATA URI STRING BELOW.
--->
-<img
-  id="app-logo"
-  src="images/citapai.png"
-  class="logo-img rounded-full shadow-lg border-4 border-primary/50"
-  alt="Citapai Logo"
-/>
+  <section class="hero">
+    <div class="hero-bg-type" aria-hidden="true">MDE</div>
+    <div class="hero-leaf hero-leaf-l" aria-hidden="true">🌿</div>
+    <div class="hero-leaf hero-leaf-r" aria-hidden="true">🌺</div>
 
+    <div class="hero-rule"></div>
+    <p class="eyebrow">Citas curadas por IA &middot; Medellín</p>
+    <h1>
+      <span class="headline">La Cita</span>
+      <span class="headline-sub">Perfecta.</span>
+      <span class="headline-city">Medellín.</span>
+    </h1>
+    <p class="sub">Dinos el ambiente — nosotros leemos la ciudad y te entregamos la noche.</p>
+    <div class="cta-wrap">
+      <a href="/app.html" class="cta-btn">
+        Planear Mi Cita
+        <svg class="cta-arrow" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <span class="cta-secondary">Sin registro &nbsp;&middot;&nbsp; Gratis</span>
+    </div>
+  </section>
 
-</div>
-<!-- App Title Text beneath the logo -->
-<h1 class="text-3xl font-extrabold text-primary mb-1" id="app-title">Citapai</h1>
-<!-- Subtitle (Retained for context) -->
-<p class="text-sm text-text-light" id="subtitle">The Medellín Idea Generator</p>
-</div>
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker-track">
+      <span class="ticker-item"><span>&#x25CF;</span> El Poblado</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Laureles</span>
+      <span class="ticker-item"><span>&#x25CF;</span> El Centro</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Envigado</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Estadio</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Aranjuez</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Belén</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Manila</span>
+      <span class="ticker-item"><span>&#x25CF;</span> La América</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Prado</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Guayabal</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Castilla</span>
+      <span class="ticker-item"><span>&#x25CF;</span> El Poblado</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Laureles</span>
+      <span class="ticker-item"><span>&#x25CF;</span> El Centro</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Envigado</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Estadio</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Aranjuez</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Belén</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Manila</span>
+      <span class="ticker-item"><span>&#x25CF;</span> La América</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Prado</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Guayabal</span>
+      <span class="ticker-item"><span>&#x25CF;</span> Castilla</span>
+    </div>
+  </div>
 
-<!-- 2. Language Switcher (Retained) -->
-<div class="flex justify-center space-x-2">
-<div class="inline-flex rounded-xl bg-gray-200 p-1 space-x-1">
-<button class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg transition duration-150 active" data-lang="en" id="lang-en">English</button>
-<button class="lang-switch px-4 py-1 text-sm font-semibold rounded-lg transition duration-150" data-lang="es" id="lang-es">Español</button>
-</div>
-</div>
-</header>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">16<em>+</em></div>
+      <div class="stat-label">Comunas de Medellín</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Parámetros. Treinta segundos.</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><em>0</em></div>
+      <div class="stat-label">Registro. Sin fricción.</div>
+    </div>
+  </div>
 
-<!-- Main Card -->
-<div class="bg-card p-6 sm:p-8 rounded-xl shadow-lg card-glow">
+  <div class="features">
+    <div class="feature">
+      <div class="feature-num">01 &mdash; Elige el vibe</div>
+      <div class="feature-title">Gastronómica. Aventura. Íntima. Cultural.</div>
+      <div class="feature-body">Desde un café de mañana hasta una noche larga el sábado — tú pones los parámetros, la ciudad responde.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-num">02 &mdash; La IA lee el ambiente</div>
+      <div class="feature-title">Gemini conoce cada barrio.</div>
+      <div class="feature-body">Curaduría nativa del barrio. No es una lista de Google. Es una opinión — respaldada por el tejido real de Medellín.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-num">03 &mdash; Aparece</div>
+      <div class="feature-title">Un toque hasta la puerta.</div>
+      <div class="feature-body">Nombre, descripción, horario, mejor momento, link a Google Maps. Todo antes de salir de casa.</div>
+    </div>
+  </div>
 
-<form id="idea-form">
+  <div class="pull-quote">
+    <blockquote>
+      "Medellín no necesita un gimmick.<br/>
+      Necesita alguien que <em>sepa a dónde llevarte.</em>"
+    </blockquote>
+  </div>
 
-<!-- Date Type -->
-<div class="mb-6">
-<label for="date-type" class="block text-text-dark font-semibold mb-2 text-center" id="label-date-type">Type of Date / Tipo de Cita</label>
-<div class="grid grid-cols-2 gap-3">
-<input type="radio" id="type-adventurous" name="date-type" value="Adventurous (Outdoors, Active)" class="custom-radio-input" checked>
-<label for="type-adventurous" class="custom-radio-label block p-3 rounded-lg text-center font-medium">
-<span id="type-adventurous-text">Adventurous</span>
-<span class="text-xs text-text-light block">(Outdoors, Active)</span>
-</label>
-<input type="radio" id="type-relaxing" name="date-type" value="Relaxing (Chill, Indoor)" class="custom-radio-input">
-<label for="type-relaxing" class="custom-radio-label block p-3 rounded-lg text-center font-medium">
-<span id="type-relaxing-text">Relaxing</span>
-<span class="text-xs text-text-light block">(Chill, Indoor)</span>
-</label>
-<input type="radio" id="type-cultural" name="date-type" value="Cultural (Art, History, Music)" class="custom-radio-input">
-<label for="type-cultural" class="custom-radio-label block p-3 rounded-lg text-center font-medium">
-<span id="type-cultural-text">Cultural</span>
-<span class="text-xs text-text-light block">(Art, History, Music)</span>
-</label>
-<input type="radio" id="type-foodie" name="date-type" value="Foodie (Gastronomy, Drinks)" class="custom-radio-input">
-<label for="type-foodie" class="custom-radio-label block p-3 rounded-lg text-center font-medium">
-<span id="type-foodie-text">Foodie</span>
-<span class="text-xs text-text-light block">(Gastronomy, Drinks)</span>
-</label>
-</div>
-</div>
+  <section class="how">
+    <div class="how-header">
+      <p class="how-label">Cómo funciona</p>
+      <div class="how-rule"></div>
+    </div>
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <div class="step-title">Elige tus parámetros</div>
+        <div class="step-body">Tipo de cita, hora del día, ambiente y presupuesto. Cuatro opciones. Treinta segundos. Sin teclear nada.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <div class="step-title">El curador arma la noche</div>
+        <div class="step-body">Gemini lee la ciudad como un local que ha ido a todos lados y recuerda todo.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <div class="step-title">Recibe el panorama completo</div>
+        <div class="step-body">Nombre, descripción, horario ideal, mejor momento — y link directo al lugar en Maps.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-content">
+        <div class="step-title">¿No te convenció? Genera otra.</div>
+        <div class="step-body">Instantáneo. Gratis. Sin cuenta. Corre de nuevo hasta que la noche se vea perfecta.</div>
+      </div>
+    </div>
+  </section>
 
-<!-- Time of Day -->
-<div class="mb-6">
-<label for="time-of-day" class="block text-text-dark font-semibold mb-2 text-center" id="label-time-of-day">Time of Day / Hora del Día</label>
-<div class="grid grid-cols-3 gap-3">
-<input type="radio" id="time-morning" name="time-of-day" value="Morning (10 AM to 1 PM)" class="custom-radio-input" checked>
-<label for="time-morning" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="time-morning-text">Morning</label>
-<input type="radio" id="time-afternoon" name="time-of-day" value="Afternoon (1 PM to 6 PM)" class="custom-radio-input">
-<label for="time-afternoon" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="time-afternoon-text">Afternoon</label>
-<input type="radio" id="time-evening" name="time-of-day" value="Evening (6 PM to 10 PM)" class="custom-radio-input">
-<label for="time-evening" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="time-evening-text">Evening</label>
-</div>
-</div>
+  <section class="final-cta">
+    <div class="final-cta-bg"></div>
+    <p class="final-overline">Lista cuando quieras</p>
+    <h2 class="final-headline">
+      La ciudad<br/>te espera.
+      <em>¿A dónde<br/>la llevas?</em>
+    </h2>
+    <p class="final-sub">Sin registro. Sin fricción. Solo Medellín.</p>
+    <a href="/app.html" class="cta-btn">
+      Planear Mi Cita
+      <svg class="cta-arrow" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </section>
 
-<!-- Atmosphere -->
-<div class="mb-6">
-<label for="atmosphere" class="block text-text-dark font-semibold mb-2 text-center" id="label-atmosphere">Atmosphere / Atmosfera</label>
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-<input type="radio" id="atmos-romantic" name="atmosphere" value="Romantic" class="custom-radio-input" checked>
-<label for="atmos-romantic" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="atmos-romantic-text">Romantic</label>
-<input type="radio" id="atmos-casual" name="atmosphere" value="Casual" class="custom-radio-input">
-<label for="atmos-casual" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="atmos-casual-text">Casual</label>
-<input type="radio" id="atmos-lively" name="atmosphere" value="Lively" class="custom-radio-input">
-<label for="atmos-lively" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="atmos-lively-text">Lively</label>
-<input type="radio" id="atmos-chill" name="atmosphere" value="Chill" class="custom-radio-input">
-<label for="atmos-chill" class="custom-radio-label block p-3 rounded-lg text-center font-medium" id="atmos-chill-text">Chill</label>
-</div>
-</div>
+  <footer class="footer">
+    <div class="footer-logo">Citapai<span>.</span></div>
+    <div class="footer-note">Medellín, Colombia &nbsp;&middot;&nbsp; Powered by Gemini 2.5 Flash</div>
+  </footer>
 
-<!-- Price -->
-<div class="mb-6">
-<label for="price" class="block text-text-dark font-semibold mb-2 text-center" id="label-price">Price / Precio</label>
-<div class="flex space-x-4 justify-center">
-<input type="radio" id="price-1" name="price" value="low cost" class="custom-radio-input">
-<label for="price-1" class="custom-radio-label flex items-center justify-center w-12 h-12 rounded-full font-bold">
-<span class="text-text-light" id="price-label-1">$</span>
-</label>
-<input type="radio" id="price-2" name="price" value="mid range" class="custom-radio-input" checked>
-<label for="price-2" class="custom-radio-label flex items-center justify-center w-12 h-12 rounded-full font-bold">
-<span class="text-text-light" id="price-label-2">$$</span>
-</label>
-<input type="radio" id="price-3" name="price" value="high end" class="custom-radio-input">
-<label for="price-3" class="custom-radio-label flex items-center justify-center w-12 h-12 rounded-full font-bold">
-<span class="text-text-light" id="price-label-3">$$$</span>
-</label>
-<input type="radio" id="price-4" name="price" value="luxury" class="custom-radio-input">
-<label for="price-4" class="custom-radio-label flex items-center justify-center w-12 h-12 rounded-full font-bold">
-<span class="text-text-light" id="price-label-4">$$$$</span>
-</label>
-</div>
-</div>
-
-
-<!-- Action Buttons -->
-<div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-<button type="submit" id="generate-button" class="flex-1 bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-200 shadow-md flex items-center justify-center space-x-2">
-<svg id="button-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15.75L4.75 9.5m0 0l-1.5-1.5m1.5 1.5l1.5 1.5m8.5 0l1.5 1.5M16 4.75L9.75 11m0 0l-1.5 1.5m1.5-1.5l1.5-1.5"></path></svg>
-<span id="button-text">Generate Idea</span>
-</button>
-<!-- Shuffle Button (Visible only after first run) -->
-<button type="button" id="shuffle-button" class="sm:w-1/3 bg-gray-200 text-text-dark font-bold py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors duration-200 shadow-md hidden flex items-center justify-center">
-<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0h5m1.25 10.5h4.996m2.383-2.383h-3.375m0 0a8.001 8.001 0 01-15.356-2.091"></path></svg>
-<span id="shuffle-button-text">Shuffle</span>
-</button>
-</div>
-</form>
-
-<!-- Loading Indicator -->
-<div id="loading-indicator" class="hidden flex justify-center items-center py-6">
-<div class="spinner mr-3"></div>
-<span class="text-text-light" id="loading-text">Generating a perfect date...</span>
-</div>
-
-<!-- Idea Output Card -->
-<div id="results-container" class="hidden mt-8 p-6 bg-secondary/10 border border-secondary rounded-xl shadow-lg card-glow space-y-4">
-
-<!-- Title (Centered) -->
-<h2 class="text-2xl font-bold text-primary mb-4 text-center" id="idea-title"></h2>
-
-<!-- Description/Vibe -->
-<div class="border-b border-gray-200 pb-4">
-<h3 class="text-lg font-semibold text-text-dark mb-2 text-center" id="result-vibe-title">The Vibe Check</h3>
-<p id="description-text" class="text-text-dark leading-relaxed text-center"></p>
-</div>
-
-<!-- Location & Map Embed/Link -->
-<div class="border-t border-gray-200 pt-4">
-<h3 class="text-lg font-semibold text-text-dark mb-2 text-center" id="result-location-label-static">Location Details</h3>
-
-<!-- Location Text -->
-<p id="location-text" class="text-text-dark font-semibold text-center mb-3"></p>
-
-<!-- Link Container (Fallback/Alternative) -->
-<div id="map-link-container" class="text-center mb-3 hidden">
-<a id="map-link" href="#" target="_blank" rel="noopener noreferrer" class="bg-primary hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center transition-colors text-sm">
-<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-<span id="map-link-text">Open in Google Maps</span>
-</a>
-</div>
-
-<!-- MAP EMBED IFRAME -->
-
-<!-- Timing Details -->
-<div class="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4">
-<div class="text-center">
-<p class="text-sm font-medium text-text-light" id="result-hours-label-static">Hours:</p>
-<p class="text-text-dark font-semibold" id="hours-text"></p>
-</div>
-<div class="text-center">
-<p class="text-sm font-medium text-text-light" id="result-best-time-label-static">Best Time to Go:</p>
-<p class="text-text-dark font-semibold" id="best-time-text"></p>
-</div>
-<div class="col-span-2 text-center">
-<p class="text-sm font-medium text-text-light" id="result-occupancy-label-static">Current Crowd (Estimate):</p>
-<p class="text-text-dark font-semibold" id="occupancy-text"></p>
-</div>
-</div>
-
-<!-- Citation -->
-<div id="citation-box" class="mt-6 p-3 bg-secondary/20 rounded-lg text-xs text-text-dark hidden">
-<p class="font-semibold mb-1" id="result-source-label-static">Source:</p>
-<a id="citation-link" href="#" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline truncate block"></a>
-</div>
-</div>
-</div>
-
-<!-- Footer / API Info -->
-<footer class="mt-8 text-center text-xs text-gray-500">
-<p id="footer-text">Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.</p>
-</footer>
 </div>
 
 <script>
-// --- API Configuration ---
-const API_MODEL = "models/gemini-1.5-flash-latest";
-
-// --- IMPORTANT: PASTE YOUR AUTHORIZED GOOGLE MAPS EMBED API KEY HERE ---
-const MAPS_API_KEY = "AIzaSyCzDF_B6hsSQyrvrgJrfZ7vAnGSWiQXE-4";
-
-// Logic for Gemini API Key handling in Canvas environment
-const API_KEY_PLACEHOLDER = "AIzaSyAqJxMU5XC6MeDrcUx4YDqXZZxtvwnkCTk"; // Placeholder for external use
-const API_KEY = (typeof __initial_auth_token !== 'undefined' && __initial_auth_token.length > 0)
-? "" // Use empty string if in Canvas environment, letting it inject the key via fetch.
-: API_KEY_PLACEHOLDER;
-
-
-// --- Global State and Constants ---
-let currentLang = 'en';
-
-// --- UI Element References ---
-const resultsContainer = document.getElementById('results-container');
-const loadingIndicator = document.getElementById('loading-indicator');
-const generateButton = document.getElementById('generate-button');
-const shuffleButton = document.getElementById('shuffle-button');
-const buttonText = document.getElementById('button-text');
-const form = document.getElementById('idea-form');
-const buttonIcon = document.getElementById('button-icon');
-const appTitle = document.getElementById('app-title');
-
-// Output elements
-const ideaTitle = document.getElementById('idea-title');
-const locationText = document.getElementById('location-text');
-const descriptionText = document.getElementById('description-text');
-const hoursText = document.getElementById('hours-text');
-const bestTimeText = document.getElementById('best-time-text');
-const occupancyText = document.getElementById('occupancy-text');
-const citationBox = document.getElementById('citation-box');
-const citationLink = document.getElementById('citation-link');
-const mapLinkContainer = document.getElementById('map-link-container');
-const mapLink = document.getElementById('map-link');
-const mapLinkText = document.getElementById('map-link-text');
-
-// Language elements
-const langSwitches = document.querySelectorAll('.lang-switch');
-
-// --- Translation Data ---
-const TRANSLATIONS = {
-'en': {
-'app-title-text': 'Citapai',
-'app-subtitle': 'The ultimate Medellín Date Idea Generator',
-'label-date-type': 'Type of Date / Tipo de Cita',
-'type-adventurous': 'Adventurous',
-'type-relaxing': 'Relaxing',
-'type-cultural': 'Cultural',
-'type-foodie': 'Foodie',
-'label-time-of-day': 'Time of Day / Hora del Día',
-'time-morning': 'Morning',
-'time-afternoon': 'Afternoon',
-'time-evening': 'Evening',
-'label-atmosphere': 'Atmosphere / Atmosfera',
-'atmos-romantic': 'Romantic',
-'atmos-casual': 'Casual',
-'atmos-lively': 'Lively',
-'atmos-chill': 'Chill',
-'label-price': 'Price / Precio',
-'price-label-1': '$',
-'price-label-2': '$$',
-'price-label-3': '$$$',
-'price-label-4': '$$$$',
-'button-text-default': 'Generate Idea',
-'button-text-loading': 'Brainstorming...',
-'shuffle-button-text': 'Shuffle',
-'loading-text': 'Generating a perfect date...',
-'result-location-label': 'Location Details',
-'result-vibe-title': 'The Vibe Check',
-'result-hours-label': 'Hours:',
-'result-best-time-label': 'Best Time to Go:',
-'result-occupancy-label': 'Current Crowd (Estimate):',
-'result-source-label': 'Source:',
-'error-api-title': 'API Request Failed',
-'error-generic-desc': 'Could not generate a date idea. Please try again or refine your input.',
-'error-key-desc': 'Request failed. Your API key may be invalid or unauthorized for the requested service (Gemini or Maps).',
-'footer-text': 'Powered by the Google Gemini API (gemini-2.5-flash-preview-09-2025) with Google Search Grounding.',
-'map-link-text': 'Open in Google Maps',
-'map-trouble-message': 'If the map below is blank, your Maps Embed API Key may need activation or domain authorization. Use the link above!'
-},
-'es': {
-'app-title-text': 'Citapai',
-'app-subtitle': 'El generador definitivo de ideas para citas en Medellín',
-'label-date-type': 'Tipo de Cita / Type of Date',
-'type-adventurous': 'Aventura',
-'type-relaxing': 'Relajante',
-'type-cultural': 'Cultural',
-'type-foodie': 'Gastronómica',
-'label-time-of-day': 'Hora del Día / Time of Day',
-'time-morning': 'Mañana',
-'time-afternoon': 'Tarde',
-'time-evening': 'Noche',
-'label-atmosphere': 'Atmósfera / Atmosphere',
-'atmos-romantic': 'Romántica',
-'atmos-casual': 'Casual',
-'atmos-lively': 'Animada',
-'atmos-chill': 'Tranquila',
-'label-price': 'Precio / Price',
-'price-label-1': '$',
-'price-label-2': '$$',
-'price-label-3': '$$$',
-'price-label-4': '$$$$',
-'button-text-default': 'Generar Idea',
-'button-text-loading': 'Generando ideas...',
-'shuffle-button-text': 'Barajar',
-'loading-text': 'Buscando una cita perfecta...',
-'result-location-label': 'Detalles de Ubicación',
-'result-vibe-title': 'El Ambiente',
-'result-hours-label': 'Horario:',
-'result-best-time-label': 'Mejor Hora:',
-'result-occupancy-label': 'Afluencia (Estimada):',
-'result-source-label': 'Fuente:',
-'error-api-title': 'Solicitud API Fallida',
-'error-generic-desc': 'No se pudo generar una idea de cita. Inténtalo de nuevo o refina tu entrada.',
-'error-key-desc': 'La solicitud falló. Su clave API puede ser inválida o no estar autorizada para el servicio solicitado (Gemini o Maps).',
-'footer-text': 'Impulsado por Google Gemini API (gemini-2.5-flash-preview-09-2025) con Google Search Grounding.',
-'map-link-text': 'Abrir en Google Maps',
-'map-trouble-message': 'Si el mapa de abajo está en blanco, su clave Maps Embed API podría requerir activación o autorización de dominio. ¡Use el enlace de arriba!'
-}
-};
-
-/**
-* The Golden Nugget: System Prompt.
-*/
-function getSystemPrompt() {
-const langName = currentLang === 'es' ? 'Latin American Spanish' : 'English';
-const randomSeed = Math.floor(Math.random() * 100000);
-return `[Request ID: ${randomSeed}] You are a renowned, "EVERYTHING" expert on Medellín, Colombia. Your goal is to provide a single, detailed, and highly unique "deep cut" date suggestion.
-
-CRITICAL: Each response must be DIFFERENT and CREATIVE. Avoid repeating the same locations. Mix well-known spots with hidden gems, local favorites, and unconventional choices. Think beyond the obvious - surprise the user!
-
-Prioritize locations, activities, or venues that are known to locals, off the beaten path, or offer a distinctly authentic and exceptional experience, rather than standard tourist spots or ordinary chain restaurants. The suggestion must still be viable and runnable based on user preferences.
-
-CRITICAL: You MUST provide ALL 7 fields below. Every single field is REQUIRED. Do not skip any field.
-
-Your response MUST strictly adhere to the following key-value format. Do not include any introductory or concluding text outside this format. Do not use markdown (like **bold** or italics). All VALUES MUST be in ${langName}.
-
-REQUIRED FORMAT (ALL 7 FIELDS MANDATORY):
-
-Title: [Name of the Location/Activity]
-Location: [Neighborhood or specific address/landmark in Medellín]
-MapQuery: [The exact, highly specific business name and address for map searching, e.g., 'El Cielo Restaurante, Calle 7D #43a-36, El Poblado, Medellín']
-Description: [A 2-3 sentence description of the atmosphere and why it's a good date spot]
-Hours: [Typical hours of operation, e.g., 10:00 AM - 10:00 PM or Mon-Fri 9AM-6PM, Sat-Sun 10AM-8PM]
-BestTime: [Specific best time/day to visit for a date, e.g., Tuesday evening for fewer crowds or Weekend mornings]
-Occupancy: [Estimate of typical crowd level during the selected time: Low, Medium, or High]
-
-EXAMPLE OUTPUT:
-Title: Jardín Botánico Secret Sunset
-Location: Jardín Botánico, Aranjuez
-MapQuery: Jardín Botánico de Medellín, Calle 73 #51d-14, Aranjuez, Medellín
-Description: A peaceful oasis in the city with stunning orchid collections and tranquil pathways. Perfect for couples seeking a romantic, nature-filled escape without leaving the urban area.
-Hours: Tuesday-Sunday 9:00 AM - 4:30 PM
-BestTime: Weekday afternoons around 3 PM for golden hour light
-Occupancy: Low
-
-CRITICAL OUTPUT RULES:
-- Output PLAIN TEXT ONLY
-- DO NOT use HTML
-- DO NOT use markdown
-- DO NOT use headings, lists, or paragraphs
-- ALL 7 fields MUST be present
-- Each field MUST be on its own line
-- Use EXACTLY this format (field names are case-sensitive):
-Title:
-Location:
-MapQuery:
-Description:
-Hours:
-BestTime:
-Occupancy:`;
-}
-
-
-/**
-* Parses the model's text response (key-value format) into a structured object.
-*/
-function parseModelResponse(text) {
-const data = {};
-const lines = text.split('\n').filter(line => line.trim() !== '');
-
-lines.forEach(line => {
-const [rawKey, ...valueParts] = line.split(':');
-if (!rawKey || valueParts.length === 0) return;
-const key = rawKey.trim().toLowerCase();
-const value = valueParts.join(':').trim();
-if (key.startsWith('title')) data.Title = value;
-else if (key.startsWith('location')) data.Location = value;
-else if (key.startsWith('map')) data.MapQuery = value;
-else if (key.startsWith('description')) data.Description = value;
-else if (key.startsWith('hours')) data.Hours = value;
-else if (key.includes('best')) data.BestTime = value;
-else if (key.includes('occup') || key.includes('crowd')) data.Occupancy = value;
-});
-console.log("Parsed Model Data:", data);
-return data;
-}
-
-/**
-* Switches all visible text content to the selected language.
-*/
-function switchLanguage(lang) {
-currentLang = lang;
-const translations = TRANSLATIONS[lang];
-
-// Update all elements based on translations
-document.getElementById('app-title-tag').textContent = translations['app-title-text'] + (lang === 'en' ? ' - Medellín Dates' : ' - Citas en Medellín');
-appTitle.textContent = translations['app-title-text'];
-document.getElementById('subtitle').textContent = translations['app-subtitle'];
-document.getElementById('label-date-type').textContent = translations['label-date-type'];
-document.getElementById('label-time-of-day').textContent = translations['label-time-of-day'];
-document.getElementById('label-atmosphere').textContent = translations['label-atmosphere'];
-document.getElementById('label-price').textContent = translations['label-price'];
-document.getElementById('type-adventurous-text').textContent = translations['type-adventurous'];
-document.getElementById('type-relaxing-text').textContent = translations['type-relaxing'];
-document.getElementById('type-cultural-text').textContent = translations['type-cultural'];
-document.getElementById('type-foodie-text').textContent = translations['type-foodie'];
-document.getElementById('time-morning-text').textContent = translations['time-morning'];
-document.getElementById('time-afternoon-text').textContent = translations['time-afternoon'];
-document.getElementById('time-evening-text').textContent = translations['time-evening'];
-document.getElementById('atmos-romantic-text').textContent = translations['atmos-romantic'];
-document.getElementById('atmos-casual-text').textContent = translations['atmos-casual'];
-document.getElementById('atmos-lively-text').textContent = translations['atmos-lively'];
-document.getElementById('atmos-chill-text').textContent = translations['atmos-chill'];
-document.getElementById('price-label-1').textContent = translations['price-label-1'];
-document.getElementById('price-label-2').textContent = translations['price-label-2'];
-document.getElementById('price-label-3').textContent = translations['price-label-3'];
-document.getElementById('price-label-4').textContent = translations['price-label-4'];
-document.getElementById('button-text').textContent = translations['button-text-default'];
-document.getElementById('shuffle-button-text').textContent = translations['shuffle-button-text'];
-document.getElementById('loading-text').textContent = translations['loading-text'];
-document.getElementById('result-location-label-static').textContent = translations['result-location-label'];
-document.getElementById('result-vibe-title').textContent = translations['result-vibe-title'];
-document.getElementById('result-hours-label-static').textContent = translations['result-hours-label'];
-document.getElementById('result-best-time-label-static').textContent = translations['result-best-time-label'];
-document.getElementById('result-occupancy-label-static').textContent = translations['result-occupancy-label'];
-document.getElementById('result-source-label-static').textContent = translations['result-source-label'];
-document.getElementById('footer-text').textContent = translations['footer-text'];
-mapLinkText.textContent = translations['map-link-text'];
-
-// Update button active state
-langSwitches.forEach(btn => {
-if (btn.getAttribute('data-lang') === lang) {
-btn.classList.add('active');
-btn.classList.remove('bg-gray-200');
-} else {
-btn.classList.remove('active');
-btn.classList.add('bg-gray-200');
-}
-btn.textContent = btn.getAttribute('data-lang') === 'en' ? 'English' : 'Español';
-});
-}
-
-// Utility to implement exponential backoff for retries
-async function fetchWithBackoff(url, options, maxRetries = 5) {
-for (let i = 0; i < maxRetries; i++) {
-try {
-const response = await fetch(url, options);
-if (response.status !== 429) {
-return response;
-}
-const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000);
-await new Promise(resolve => setTimeout(resolve, delay));
-} catch (error) {
-const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000);
-await new Promise(resolve => setTimeout(resolve, delay));
-if (i === maxRetries - 1) throw error;
-}
-}
-throw new Error("Max retries exceeded.");
-}
-
-
-/**
-* Updates the map display logic to use both the embed and the robust link.
-*/
-function updateMapDisplay(mapQuery) {
-const isValid = mapQuery && mapQuery.trim() !== '';
-
-if (!isValid) {
-mapLinkContainer.classList.add('hidden');
-return;
-}
-
-const searchUrl =
-`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
-
-mapLink.href = searchUrl;
-mapLinkContainer.classList.remove('hidden');
-}
-
-
-
-/**
-* Handles the form submission and initiates the API call.
-*/
-async function handleGenerate(event) {
-if (event) { event.preventDefault(); }
-const translations = TRANSLATIONS[currentLang];
-
-// --- 1. Get User Preferences ---
-const type = form.elements['date-type'].value;
-const timeOfDay = form.elements['time-of-day'].value;
-const atmosphere = form.elements.atmosphere.value;
-const price = form.elements.price.value;
-
-// --- Construct Query for the "Golden Nugget" Prompt ---
-const userQuery = `Generate a unique date idea for Medellín with the following criteria: Type: ${type}, Time of Day: ${timeOfDay}, Atmosphere: ${atmosphere}, Price: ${price}. Provide location, hours, best time to go, and crowd occupancy estimate. Respond fully in ${currentLang === 'es' ? 'Latin American Spanish' : 'English'}.`;
-
-// --- 2. UI State: Loading ---
-resultsContainer.classList.add('hidden'); // Hide old results
-mapLinkContainer.classList.add('hidden'); // Hide old link
-loadingIndicator.classList.remove('hidden');
-
-generateButton.disabled = true;
-shuffleButton.disabled = true;
-shuffleButton.classList.add('hidden');
-
-// Update button text and icon
-buttonText.textContent = translations['button-text-loading'];
-buttonIcon.classList.add('animate-spin');
-
-// --- 3. Construct API Payload (Gemini) ---
-const systemPrompt = getSystemPrompt();
-const payload = {
-contents: [{ parts: [{ text: userQuery }] }],
-tools: [{ "google_search": {} }],
-systemInstruction: { parts: [{ text: systemPrompt }] },
-};
-
-let responseData;
-let citationSources = [];
-
-try {
-const response = await fetch("/.netlify/functions/generate", {
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify({
-userQuery,
-systemPrompt
-})
-});
-
-
-
-if (!response.ok) {
-throw new Error(`API request failed with status ${response.status}`);
-}
-const result = await response.json();
-const candidate = result.candidates?.[0];
-
-if (result.promptFeedback && result.promptFeedback.blockReason) {
-throw new Error(`Content Blocked: ${result.promptFeedback.blockReason}`);
-}
-
-const groundingMetadata = candidate.groundingMetadata;
-if (groundingMetadata && groundingMetadata.groundingAttributions) {
-citationSources = groundingMetadata.groundingAttributions
-.map(attribution => ({
-uri: attribution.web?.uri,
-title: attribution.web?.title,
-}))
-.filter(source => source.uri && source.title);
-}
-
-const rawText = candidate.content.parts[0].text;
-console.log("=== RAW API RESPONSE ===");
-console.log(rawText);
-console.log("=== END RAW RESPONSE ===");
-responseData = parseModelResponse(rawText);
-
-if (!responseData.Title || !responseData.Location) {
-throw new Error(`Model returned unexpected format. Text starts with: ${rawText.substring(0, 50)}...`);
-}
-
-} catch (error) {
-console.error("API Error:", error);
-
-const errorMessage = (error.message.includes('400') || error.message.includes('403') || error.message.includes('401'))
-? translations['error-key-desc']
-: translations['error-generic-desc'];
-
-ideaTitle.textContent = translations['error-api-title'];
-locationText.textContent = errorMessage;
-descriptionText.textContent = '';
-hoursText.textContent = '';
-bestTimeText.textContent = '';
-occupancyText.textContent = '';
-citationBox.classList.add('hidden');
-
-} finally {
-// --- 4. UI State: Completed ---
-loadingIndicator.classList.add('hidden');
-generateButton.disabled = false;
-shuffleButton.disabled = false;
-// Only show shuffle button if results were successfully generated before
-if (responseData) {
-shuffleButton.classList.remove('hidden');
-}
-buttonText.textContent = translations['button-text-default'];
-buttonIcon.classList.remove('animate-spin');
-}
-
-// --- 5. Populate Results (Only runs on successful try block) ---
-if (responseData) {
-ideaTitle.textContent = responseData.Title || 'Unknown Place';
-locationText.textContent = responseData.Location || 'Location unavailable';
-descriptionText.textContent = responseData.Description || 'Description not available';
-hoursText.textContent = responseData.Hours || 'Hours not specified';
-bestTimeText.textContent = responseData.BestTime || 'No specific time recommended';
-occupancyText.textContent = responseData.Occupancy || 'Unknown';
-
-// Handle Map Display (Embed + Fallback Link)
-updateMapDisplay(responseData.MapQuery);
-
-// Handle citation display
-if (citationSources.length > 0) {
-const source = citationSources[0];
-citationLink.href = source.uri;
-citationLink.textContent = source.title || source.uri;
-citationBox.classList.remove('hidden');
-} else {
-citationBox.classList.add('hidden');
-}
-
-// Show the results
-resultsContainer.classList.remove('hidden');
-}
-}
-
-// --- Event Listeners and Initialization ---
-
-document.addEventListener('DOMContentLoaded', () => {
-// Initialize language to English
-switchLanguage(currentLang);
-
-// Language switch handler
-langSwitches.forEach(btn => {
-btn.addEventListener('click', () => {
-const lang = btn.getAttribute('data-lang');
-if (lang !== currentLang) {
-switchLanguage(lang);
-}
-});
-});
-
-// Form submission handler
-form.addEventListener('submit', handleGenerate);
-
-// Shuffle button handler. This re-submits the form using the current selected values.
-shuffleButton.addEventListener('click', () => {
-handleGenerate(null);
-});
-});
+  const topbar = document.getElementById('topbar');
+  window.addEventListener('scroll', () => {
+    topbar.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
 </script>
 </body>
 </html>
