@@ -694,36 +694,47 @@ function App() {
     setIsSaved(saved.some(s => (s.MapQuery || s.Title) === key));
   }, [result, saved]);
 
+  const fetchOnce = async () => {
+    const res = await fetch('/.netlify/functions/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dateType, timeOfDay, atmosphere, price, neighborhood, lang })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    const candidate = data.candidates?.[0];
+    if (!candidate) throw new Error('No candidate returned');
+
+    // Extract citation sources
+    let citationSources = [];
+    const gm = candidate.groundingMetadata;
+    if (gm?.groundingAttributions) {
+      citationSources = gm.groundingAttributions
+        .map(a => ({ uri: a.web?.uri, title: a.web?.title }))
+        .filter(s => s.uri && s.title);
+    }
+
+    const rawText = candidate.content.parts[0].text;
+    const parsed  = parseModelResponse(rawText);
+
+    if (!parsed.Title || !parsed.Location) throw new Error('Unexpected model format');
+
+    return { parsed, citationSources };
+  };
+
   const generate = async () => {
     setLoading(true); setError(null); setResult(null); setIsSaved(false);
+    const MAX_ATTEMPTS = 2; // safety net only — the server already retries the finder stage internally
+    let lastGood = null;
     try {
-      const res = await fetch('/.netlify/functions/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userQuery: buildQuery(),
-          systemPrompt: buildSystemPrompt()
-        })
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      const candidate = data.candidates?.[0];
-      if (!candidate) throw new Error('No candidate returned');
-
-      // Extract citation sources
-      let citationSources = [];
-      const gm = candidate.groundingMetadata;
-      if (gm?.groundingAttributions) {
-        citationSources = gm.groundingAttributions
-          .map(a => ({ uri: a.web?.uri, title: a.web?.title }))
-          .filter(s => s.uri && s.title);
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const { parsed, citationSources } = await fetchOnce();
+        lastGood = { parsed, citationSources };
+        const isVerified = (parsed.Verified || '').trim().toLowerCase().startsWith('y');
+        if (isVerified) break;
+        // Not verified — loop again for a fresh round trip.
       }
-
-      const rawText = candidate.content.parts[0].text;
-      const parsed  = parseModelResponse(rawText);
-
-      if (!parsed.Title || !parsed.Location) throw new Error('Unexpected model format');
-
+      const { parsed, citationSources } = lastGood;
       setResult({ ...parsed, _citationSources: citationSources });
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } catch {
@@ -731,30 +742,6 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const buildQuery = () => {
-    const langFull = lang === 'es' ? 'Latin American Spanish' : 'English';
-    const nbLabel  = neighborhood === 'any' ? 'anywhere in Medellín' : `in ${neighborhood}`;
-    return `Generate a unique date idea ${nbLabel} with: Type: ${dateType}, Time: ${timeOfDay}, Atmosphere: ${atmosphere}, Price: ${price}. Respond fully in ${langFull}.`;
-  };
-
-  const buildSystemPrompt = () => {
-    const langFull = lang === 'es' ? 'Latin American Spanish' : 'English';
-    const randomSeed = Math.floor(Math.random() * 100000);
-    return `[Request ID: ${randomSeed}] You are a world-class expert on Medellín, Colombia — La Ciudad Primavera Eterna. Your goal is to provide a single, highly specific, and creative "deep cut" date suggestion that locals would love. Avoid obvious tourist traps. Think hidden gems, neighborhood staples, and authentic experiences.
-
-CRITICAL: ALL 7 fields are MANDATORY. Respond only in ${langFull}.
-
-REQUIRED FORMAT (plain text, one field per line, no markdown):
-
-Title: [Name of venue/activity]
-Location: [Neighborhood or address in Medellín]
-MapQuery: [Exact venue name and address for Google Maps, e.g. 'Pergamino Café, Carrera 37 #8A-37, El Poblado, Medellín']
-Description: [2-3 sentence description of atmosphere and why it's a great date spot]
-Hours: [Typical hours, e.g. Lunes-Sábado 8AM-10PM]
-BestTime: [Specific best time/day, e.g. Martes en la tarde para menos gente]
-Occupancy: [Estimate: Baja / Media / Alta — or Low / Medium / High]`;
   };
 
   const parseModelResponse = (text) => {
@@ -771,6 +758,7 @@ Occupancy: [Estimate: Baja / Media / Alta — or Low / Medium / High]`;
       else if (k.startsWith('hour') || k.startsWith('hora')) data.Hours  = v;
       else if (k.includes('best') || k.includes('mejor'))   data.BestTime= v;
       else if (k.includes('occup') || k.includes('afluen')) data.Occupancy = v;
+      else if (k.startsWith('verif'))                   data.Verified    = v;
     });
     return data;
   };
