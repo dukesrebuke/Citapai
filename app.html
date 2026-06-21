@@ -649,6 +649,9 @@ function App() {
   const [atmosphere,   setAtmosphere]   = useState('romantic');
   const [price,        setPrice]        = useState('mid');
   const [neighborhood, setNeighborhood] = useState('any');
+  // Venues already shown this session, so "Try Another" / retries don't repeat them.
+  // Capped client-side too — kept small so it doesn't bloat the request payload.
+  const [shownVenues,  setShownVenues]  = useState([]);
 
   const toast        = useToast();
   const resultRef    = useRef(null);
@@ -694,11 +697,11 @@ function App() {
     setIsSaved(saved.some(s => (s.MapQuery || s.Title) === key));
   }, [result, saved]);
 
-  const fetchOnce = async () => {
+  const fetchOnce = async (excludedVenues = []) => {
     const res = await fetch('/.netlify/functions/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dateType, timeOfDay, atmosphere, price, neighborhood, lang })
+      body: JSON.stringify({ dateType, timeOfDay, atmosphere, price, neighborhood, lang, excludedVenues })
     });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
@@ -726,16 +729,21 @@ function App() {
     setLoading(true); setError(null); setResult(null); setIsSaved(false);
     const MAX_ATTEMPTS = 2; // safety net only — the server already retries the finder stage internally
     let lastGood = null;
+    const localExcluded = [...shownVenues]; // grows within this call too, so attempt 2 doesn't repeat attempt 1's pick
     try {
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        const { parsed, citationSources } = await fetchOnce();
+        const { parsed, citationSources } = await fetchOnce(localExcluded);
         lastGood = { parsed, citationSources };
+        if (parsed.Title) localExcluded.push(parsed.Title);
         const isVerified = (parsed.Verified || '').trim().toLowerCase().startsWith('y');
         if (isVerified) break;
         // Not verified — loop again for a fresh round trip.
       }
       const { parsed, citationSources } = lastGood;
       setResult({ ...parsed, _citationSources: citationSources });
+      if (parsed.Title) {
+        setShownVenues(prev => [...prev, parsed.Title].slice(-12));
+      }
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     } catch {
       setError(t.error);
