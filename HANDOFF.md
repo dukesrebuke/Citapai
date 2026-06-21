@@ -1,3 +1,34 @@
+# Citapai — Handoff v2
+
+## WHAT WAS DONE — 2026-06-20 (session 2)
+
+System prompt + reliability pass on `netlify/functions/generate.js`, requested after a review of the two-stage Finder/Writer prompt design. No new files; targeted edits to `generate.js` and `app.html`.
+
+### 1. Venue exclusion / no more repeats
+- **Problem:** "Try Another" and the internal 3x Finder retry both called the model fresh each time with no memory of what had already been shown or already rejected — same venue could come back twice.
+- **Fix:**
+  - `app.html`: new `shownVenues` state (capped at last 12, persists for the session, not localStorage). `fetchOnce` now sends it as `excludedVenues` in the POST body. `generate()` also grows a local copy mid-call so its own 2-attempt safety-net retry doesn't repeat the first attempt's pick.
+  - `generate.js`: handler accepts `excludedVenues`, seeds a `triedVenues` list from it, and pushes any Finder candidate that fails verification onto that list before the next internal attempt. `buildFinderPrompt` now takes `excludeList` and injects a "do not suggest any of these" line into the system prompt when non-empty.
+
+### 2. Writer no longer re-guesses hours
+- **Problem:** Finder verified the venue was open via search but discarded whatever hours it found; Writer (temp 1.3, no search) then invented "Hours" from scratch — the most likely place for hallucinated info.
+- **Fix:** Finder's required output now includes an `Hours` field ("real opening hours found via search, or leave blank"). `parseFields` already captured this (no parser change needed). `buildWriterPrompt` checks `venue.Hours`: if present, it's handed to the Writer as ground truth ("use this exact information, do not invent different hours"); if absent, the Writer is told no verified hours were found and to stay general rather than oddly specific.
+- Also added a light guardrail in the Writer prompt against fabricating specific prices/phone numbers/other hard facts not provided.
+
+### 3. Fallback venue list — no more dead-end 502s
+- **Problem:** If the Finder failed to return any parseable candidate across all 3 attempts (rare model formatting hiccup), the function 502'd and the user saw a bare error.
+- **Fix:** Added `FALLBACK_VENUES` — 6 hand-picked, extremely-unlikely-to-ever-close Medellín institutions (Jardín Botánico, Parque Arví, Cerro Nutibara, Parque de los Pies Descalzos, Parque Lleras, Pueblito Paisa). `pickFallbackVenue(excludeList)` picks one not already shown. On total Finder failure, the handler now uses a fallback venue (`Verified: "Yes"`) and continues into the Writer stage normally instead of failing the request.
+
+### 4. Rate limiting
+- **Problem:** `/generate` is public, unauthenticated, and makes 2 Gemini calls per request — no protection against scripted abuse burning API quota.
+- **Fix:** Added `exports.config` with Netlify's code-based rate limiting: 12 requests/IP/minute (`windowLimit: 12, windowSize: 60, aggregateBy: ["ip", "domain"]`). Per Netlify docs this must live in the function file itself (cannot be set via `netlify.toml`). Free tier allows 2 code-based rules/project — this uses 1.
+
+### Not done / explicitly deferred
+- Minor: `Verified` field parsing (`startsWith("y")`) is a bit fragile but low-risk since the format is English-only by instruction — left as-is.
+- No changes to `index.html`, `netlify.toml`, or the design system in this session.
+
+---
+
 # Citapai — Handoff v1
 
 ## WHAT WAS DONE — 2026-04-14 (session 1)

@@ -69,20 +69,45 @@ function parseFields(text) {
   return data;
 }
 
-function buildFinderPrompt({ dateType, timeOfDay, atmosphere, price, neighborhood, langFull, seed }) {
+// Fallback venues used only when the Finder model fails to return any parseable
+// candidate after all retries — long-running, well-known Medellín institutions
+// chosen specifically because they're extremely unlikely to ever be closed.
+// This is a last resort so the app never dead-ends with a hard error.
+const FALLBACK_VENUES = [
+  { Title: "Jardín Botánico de Medellín",  Location: "Bostonia, Norte", MapQuery: "Jardín Botánico de Medellín, Carrera 52 #73-298" },
+  { Title: "Parque Arví",                  Location: "Santa Elena",     MapQuery: "Parque Arví, Medellín" },
+  { Title: "Cerro Nutibara",               Location: "Belén",           MapQuery: "Cerro Nutibara, Medellín" },
+  { Title: "Parque de los Pies Descalzos", Location: "La Candelaria",   MapQuery: "Parque de los Pies Descalzos, Medellín" },
+  { Title: "Parque Lleras",                Location: "El Poblado",      MapQuery: "Parque Lleras, Medellín" },
+  { Title: "Pueblito Paisa",               Location: "Cerro Nutibara",  MapQuery: "Pueblito Paisa, Medellín" }
+];
+
+function pickFallbackVenue(excludeList) {
+  const excluded = new Set((excludeList || []).map(v => (v || "").toLowerCase()));
+  const candidates = FALLBACK_VENUES.filter(v => !excluded.has(v.Title.toLowerCase()));
+  const pool = candidates.length ? candidates : FALLBACK_VENUES;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function buildFinderPrompt({ dateType, timeOfDay, atmosphere, price, neighborhood, langFull, seed, excludeList }) {
   const nbLabel = neighborhood === "any" ? "anywhere in Medellín" : `in ${neighborhood}`;
   const userQuery = `Find ONE specific real venue/activity ${nbLabel} matching: Type: ${dateType}, Time: ${timeOfDay}, Atmosphere: ${atmosphere}, Price: ${price}.`;
-  const systemPrompt = `[Request ID: ${seed}] You are a meticulous local-knowledge researcher for Medellín, Colombia. Your ONLY job right now is to identify ONE specific, real, currently operating venue or activity that fits the request — favor hidden gems and neighborhood staples over obvious tourist traps, but accuracy beats novelty.
+  const exclusionLine = (excludeList && excludeList.length)
+    ? `\n\nDO NOT suggest any of these venues — the user has already seen them recently: ${excludeList.join(", ")}. Pick something different that still fits the filters.`
+    : "";
+  const systemPrompt = `[Request ID: ${seed}] You are a meticulous local-knowledge researcher for Medellín, Colombia. Your ONLY job right now is to identify ONE specific, real, currently operating venue or activity that fits the request — favor hidden gems and neighborhood staples over obvious tourist traps, but accuracy beats novelty.${exclusionLine}
 
 VERIFICATION IS MANDATORY: You MUST use Google Search to confirm the venue is CURRENTLY OPEN AND OPERATING — not permanently closed, not "temporarily closed" with no reopening date, not something you only recall from training data. Search the venue name plus "Medellín" plus terms like "horario" / "hours" / "cerrado permanentemente" / "permanently closed" and check results from the last 12 months.
 - If confirmed open: report it, Verified = Yes.
 - If you cannot confirm, or find any signal it may be closed: pick a different venue you CAN verify, or fall back to a category that can't "close" — a park, mirador, plaza, public trail, well-known long-running institution — and only set Verified = Yes once that fallback itself is confirmed.
+- While searching, note any real opening hours you find. If you find none, leave that field blank rather than guessing.
 - Never guess. Do not write any creative description here — that happens in a later step. Keep this factual and terse.
 
 REQUIRED FORMAT (plain text, one field per line, no markdown, English labels even if place name is Spanish):
 Title: [Name of venue/activity]
 Location: [Neighborhood or address in Medellín]
 MapQuery: [Exact venue name and address for Google Maps]
+Hours: [Real opening hours found via search, or leave blank if none found]
 Verified: [Yes or No]`;
 
   return { userQuery, systemPrompt };
@@ -90,13 +115,19 @@ Verified: [Yes or No]`;
 
 function buildWriterPrompt({ venue, langFull, seed }) {
   const userQuery = `Write the creative copy for this already-confirmed date spot: "${venue.Title}" — ${venue.Location} (${venue.MapQuery}). Respond fully in ${langFull}.`;
-  const systemPrompt = `[Request ID: ${seed}] You are a world-class creative writer and local tastemaker for Medellín, Colombia — La Ciudad Primavera Eterna. The venue has ALREADY been verified as real and currently open — your only job is to make it sound irresistible. Be as vivid, specific, and creative as possible with tone, sensory detail, and local color. Do not invent facts that contradict the venue identity given to you, but feel free to be bold and evocative in how you describe the vibe and experience.
+  const verifiedHoursLine = venue.Hours
+    ? `\n\nVERIFIED HOURS (found via search during the verification step — use this exact information, do not invent different hours): ${venue.Hours}`
+    : "";
+  const hoursInstruction = venue.Hours
+    ? `Hours: [Restate the verified hours given to you above, formatted naturally]`
+    : `Hours: [Typical hours, e.g. Lunes-Sábado 8AM-10PM — no verified hours were found, so keep this plausible and general rather than oddly specific]`;
+  const systemPrompt = `[Request ID: ${seed}] You are a world-class creative writer and local tastemaker for Medellín, Colombia — La Ciudad Primavera Eterna. The venue has ALREADY been verified as real and currently open — your only job is to make it sound irresistible. Be as vivid, specific, and creative as possible with tone, sensory detail, and local color. Do not invent facts that contradict the venue identity given to you, but feel free to be bold and evocative in how you describe the vibe and experience.${verifiedHoursLine}
 
-CRITICAL: ALL 4 fields are MANDATORY. Respond only in ${langFull}.
+CRITICAL: ALL 4 fields are MANDATORY. Respond only in ${langFull}. Do not fabricate specific prices, phone numbers, or other hard facts you weren't given — stay general and atmospheric where you're uncertain.
 
 REQUIRED FORMAT (plain text, one field per line, no markdown):
 Description: [2-3 vivid sentences on atmosphere and why it's a great date spot]
-Hours: [Typical hours, e.g. Lunes-Sábado 8AM-10PM]
+${hoursInstruction}
 BestTime: [Specific best time/day, e.g. Martes en la tarde para menos gente]
 Occupancy: [Estimate: Baja / Media / Alta — or Low / Medium / High]`;
 
@@ -109,7 +140,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { dateType, timeOfDay, atmosphere, price, neighborhood, lang } = JSON.parse(event.body);
+    const { dateType, timeOfDay, atmosphere, price, neighborhood, lang, excludedVenues } = JSON.parse(event.body);
     if (!dateType || !timeOfDay || !atmosphere || !price || !neighborhood) {
       return { statusCode: 400, body: "Missing filter data" };
     }
@@ -121,13 +152,17 @@ exports.handler = async (event) => {
 
     const langFull = lang === "es" ? "Latin American Spanish" : "English";
 
+    // Venues to steer away from: whatever the client already showed this user,
+    // plus anything we try-and-reject within this call's own retry loop below.
+    const triedVenues = Array.isArray(excludedVenues) ? excludedVenues.filter(Boolean).slice(-15) : [];
+
     // --- Stage 1: FINDER (low temp, grounded, retried internally up to 3x) ---
     let venue = null;
     let citations = [];
     const FINDER_ATTEMPTS = 3;
     for (let attempt = 1; attempt <= FINDER_ATTEMPTS; attempt++) {
       const seed = Math.floor(Math.random() * 100000);
-      const { userQuery, systemPrompt } = buildFinderPrompt({ dateType, timeOfDay, atmosphere, price, neighborhood, langFull, seed });
+      const { userQuery, systemPrompt } = buildFinderPrompt({ dateType, timeOfDay, atmosphere, price, neighborhood, langFull, seed, excludeList: triedVenues });
       const { text, citations: c } = await callGemini(apiKey, {
         userQuery, systemPrompt,
         temperature: 0.4,
@@ -138,12 +173,19 @@ exports.handler = async (event) => {
       if (parsed.Title && parsed.MapQuery) {
         venue = parsed;
         citations = c;
-        if ((parsed.Verified || "").trim().toLowerCase().startsWith("y")) break;
+        const isVerified = (parsed.Verified || "").trim().toLowerCase().startsWith("y");
+        if (isVerified) break;
+        triedVenues.push(parsed.Title);
       }
     }
 
     if (!venue) {
-      return { statusCode: 502, body: JSON.stringify({ error: "Could not find a venue after retries" }) };
+      // The Finder never returned a single parseable candidate across all attempts
+      // (rare — usually a model formatting hiccup). Rather than fail the request,
+      // hand the user a pre-vetted, always-open venue and continue to the Writer
+      // stage normally so they still get a fully-formed result.
+      venue = { ...pickFallbackVenue(triedVenues), Verified: "Yes" };
+      citations = [];
     }
 
     // --- Stage 2: WRITER (high temp, max creativity, no search needed) ---
@@ -187,5 +229,19 @@ exports.handler = async (event) => {
       statusCode: 500,
       body: JSON.stringify({ error: err.message })
     };
+  }
+};
+
+// Abuse protection: this endpoint is public, unauthenticated, and calls the paid
+// Gemini API on every request (twice, internally). Without a limit, a script — or
+// just an enthusiastic "Try Another" tapper — could burn through API quota fast.
+// 12 requests/IP/minute is generous for normal browsing but blocks scripted abuse.
+// https://docs.netlify.com/manage/security/secure-access-to-sites/rate-limiting/
+exports.config = {
+  path: "/.netlify/functions/generate",
+  rateLimit: {
+    windowLimit: 12,
+    windowSize: 60,
+    aggregateBy: ["ip", "domain"]
   }
 };
