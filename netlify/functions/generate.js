@@ -62,6 +62,7 @@ function parseFields(text) {
     else if (k.startsWith("map")) data.MapQuery = v;
     else if (k.startsWith("desc")) data.Description = v;
     else if (k.startsWith("hour") || k.startsWith("hora")) data.Hours = v;
+    else if (k.startsWith("phone") || k.startsWith("tel")) data.Phone = v;
     else if (k.includes("best") || k.includes("mejor")) data.BestTime = v;
     else if (k.includes("occup") || k.includes("afluen")) data.Occupancy = v;
     else if (k.startsWith("verif")) data.Verified = v;
@@ -101,6 +102,7 @@ VERIFICATION IS MANDATORY: You MUST use Google Search to confirm the venue is CU
 - If confirmed open: report it, Verified = Yes.
 - If you cannot confirm, or find any signal it may be closed: pick a different venue you CAN verify, or fall back to a category that can't "close" — a park, mirador, plaza, public trail, well-known long-running institution — and only set Verified = Yes once that fallback itself is confirmed.
 - While searching, note any real opening hours you find. If you find none, leave that field blank rather than guessing.
+- Also note a contact phone/WhatsApp number if you find one in the same search results (Google Maps listing, the venue's own site/Instagram). Use international format with country code if possible (Colombia is +57). If you don't find one, leave it blank — never guess or construct a plausible-looking number.
 - Never guess. Do not write any creative description here — that happens in a later step. Keep this factual and terse.
 
 REQUIRED FORMAT (plain text, one field per line, no markdown, English labels even if place name is Spanish):
@@ -108,6 +110,7 @@ Title: [Name of venue/activity]
 Location: [Neighborhood or address in Medellín]
 MapQuery: [Exact venue name and address for Google Maps]
 Hours: [Real opening hours found via search, or leave blank if none found]
+Phone: [Phone/WhatsApp number in international format if found via search, or leave blank]
 Verified: [Yes or No]`;
 
   return { userQuery, systemPrompt };
@@ -209,6 +212,7 @@ exports.handler = async (event) => {
       `Hours: ${written.Hours || ""}`,
       `BestTime: ${written.BestTime || ""}`,
       `Occupancy: ${written.Occupancy || ""}`,
+      `Phone: ${venue.Phone || ""}`,
       `Verified: ${venue.Verified || "No"}`
     ].join("\n");
 

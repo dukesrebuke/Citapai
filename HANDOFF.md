@@ -1,4 +1,56 @@
-# Citapai — Handoff v2
+# Citapai — Handoff v3
+
+## WHAT WAS DONE — 2026-06-20 (session 3)
+
+### 1. Closed-business hallucination fix → two-stage Finder/Writer split
+- **Problem:** a single Gemini call at temp 1.1 was both picking the venue and writing creative copy. High temp + "hidden gem" framing increased the odds of recommending a closed/non-existent venue, and Google Search grounding was available as a tool but not mandatory — the model could skip it.
+- **Fix:** split `generate.js` into two sequential calls:
+  - **Finder** (temp 0.4, Google Search grounded, retried internally up to 3x) — only job is to pick ONE real venue and verify via search it's currently open. Returns `Title`/`Location`/`MapQuery`/`Verified` (terse, no creative writing).
+  - **Writer** (temp 1.3, no search needed) — takes the already-verified venue and writes `Description`/`Hours`/`BestTime`/`Occupancy` as creatively as it wants, since the facts are locked in by the time it writes.
+  - Frontend checks the `Verified` field and retries (up to 2x) if not "Yes".
+  - This is the architecture the parallel "session 2" reliability pass (below) was built on top of.
+
+### 2. Blank-screen fix → self-contained JS bundle
+- **Problem:** `app.html` loaded React + ReactDOM + Babel live from unpkg.com on every visit and JIT-compiled JSX in-browser. On flaky Colombian mobile connections this could leave a permanent blank screen with no error — survived cache-busting, hard refresh, and incognito, since it wasn't a cache problem.
+- **Fix:** `build/src/app.jsx` is now the actual source of truth for the app's JS. Bundled with esbuild into `assets/app.bundle.js` (committed to the repo, ~150kb minified). `app.html`'s `<head>` now loads just one same-origin script:
+  ```html
+  <script defer src="/assets/app.bundle.js"></script>
+  ```
+  Zero external runtime dependencies, zero in-browser compile step.
+- **IMPORTANT — app.html no longer contains the inline `<script type="text/babel">` block.** All future JS/JSX changes must be made in `build/src/app.jsx`, then rebuilt and copied over:
+  ```bash
+  npx esbuild build/src/app.jsx --bundle --minify --format=iife --jsx=transform \
+    --define:process.env.NODE_ENV='"production"' --outfile=assets/app.bundle.js
+  ```
+  (run from repo root; needs `react` + `react-dom` installed in `node_modules`)
+
+### 3. Merged with a parallel reliability commit
+- A separate Claude session pushed commit `a8334f1` ("Reliability + system prompt improvements," documented as "session 2" below) directly to GitHub while this session's push was blocked by a revoked token. Both commits branched from the same parent and both touched `app.html`, so they conflicted.
+- Resolution: took `generate.js` and `HANDOFF.md` from `a8334f1` as-is (untouched by this session). For `app.html`, kept this session's bundle-based version and manually ported their `shownVenues`/`excludedVenues` exclusion logic into `build/src/app.jsx`, then rebuilt the bundle.
+- Verified via jsdom simulation (see below) before pushing, since the user has no computer to test on.
+
+### Verification method used this session
+No computer/browser devtools available to the user (mobile-only). Verified all JS changes without a real browser by: (1) Babel-transforming the JSX offline to catch syntax errors, (2) `node --check` on `generate.js`, (3) actually executing the real production bundle inside a jsdom + React 18 environment and confirming it mounts content into `#root`. Recommend continuing this pattern for any change that can't be visually tested on-device — it would have caught the blank-screen issue before it shipped if used proactively.
+
+### NEXT UP — scoped, not yet built: WhatsApp reservation CTA
+**Why:** discussed this session as the lowest-effort path toward restaurants-pay-per-reservation revenue. Big reservation platforms (OpenTable/Resy/TheFork) charge restaurants, not discovery apps, and have near-zero penetration in Medellín — most venues take reservations via WhatsApp/phone with no formal booking system. Citapai can plausibly become that referral layer manually, without building real booking infra.
+
+**Scope for v1:**
+1. Add a "Reservar por WhatsApp" button to the result card (alongside View on Map / Save / Share / Try Another).
+   - Needs a phone number per venue, which isn't in the data model yet (Finder currently returns Title/Location/MapQuery/Hours/Verified, no phone). Add a `Phone` field to the Finder's required output, verified during the same search step as Hours/open-status. If not found, hide the button rather than guessing a number.
+   - Link format: `https://wa.me/<number>?text=<prefilled message referencing the venue + date context>`
+2. Track clicks for future revenue conversations — log `{venue, mapQuery, neighborhood, timestamp}` somewhere on click (Netlify Blobs is the lowest-effort option since there's no DB in this repo yet; Supabase if more structure is wanted later). Fire-and-forget, must not block the WhatsApp navigation.
+3. No automated billing or booking confirmation in v1 — this is purely a lead-gen tracker. The actual monetization step is manual outreach to venue owners using the click data, not code.
+4. Stretch, only if v1 shows traction: a small `/admin` view showing per-venue click counts, so outreach pitches don't require pulling raw data by hand.
+
+### 4. WhatsApp reservation CTA — shipped (button + Phone field only, no tracking yet)
+- **What shipped:** Finder now also searches for and reports a `Phone` field (international format) alongside Hours/Verified, sourced the same way — verified during the search step, left blank rather than guessed if not found. `generate.js` passes it straight through to the frontend untouched by the Writer (a phone number doesn't need creative rephrasing).
+- Result card now shows a "Reservar por WhatsApp" / "Reserve on WhatsApp" button (next to View on Map), only rendered when `result.Phone` is present. Builds a `wa.me/<digits>?text=<prefilled message>` link, message is bilingual based on `lang`.
+- **Deliberately NOT shipped this session:** click tracking. Doing this properly means a new Netlify Function with a storage dependency (`@netlify/blobs` is the natural choice — needs a `package.json` in `netlify/functions/` declaring it so Netlify's build installs it). Adding an untested new dependency to a function with no way for either of us to verify the actual Netlify build/runtime behavior felt like the wrong tradeoff under time pressure — a broken function deploy is worse than a missing feature. **Next session: add `netlify/functions/package.json` with `@netlify/blobs`, a `track-click.js` function that appends `{venue, mapQuery, neighborhood, timestamp}` on click (fire-and-forget from the frontend, must not block the WhatsApp navigation), and actually verify the deploy succeeds before trusting it.**
+
+---
+
+
 
 ## WHAT WAS DONE — 2026-06-20 (session 2)
 
